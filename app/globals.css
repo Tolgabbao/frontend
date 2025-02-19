@@ -5,6 +5,8 @@
 :root {
   --primary: #17124A;
   --secondary: #845EF7;
+  --background: #FFFFFF;
+  --foreground: #040217;
   --error: #FF000D;
   --warning: #FFB020;
   --info: #3366FF;
@@ -46,8 +48,8 @@ body {
     --foreground: 0 0% 3.9%;
     --card: 0 0% 100%;
     --card-foreground: 0 0% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover: #FFFFFF;
+    --popover-foreground: #040217;
     --primary: 0 0% 9%;
     --primary-foreground: 0 0% 98%;
     --secondary: 0 0% 96.1%;
@@ -73,8 +75,8 @@ body {
     --foreground: 0 0% 98%;
     --card: 0 0% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: #040217;
+    --popover-foreground: #FFFFFF;
     --primary: 0 0% 98%;
     --primary-foreground: 0 0% 9%;
     --secondary: 0 0% 14.9%;
@@ -154,4 +156,11 @@ body {
   to {
     transform: translateX(-100%);
   }
+}
+
+.dark {
+  --background: #040217;
+  --foreground: #FFFFFF;
+  --primary: #845EF7;
+  --secondary: #17124A;
 }

@@ -1,4 +1,4 @@
-import type { Config } from "tailwindcss"
+import type { Config } from "tailwindcss";
 
 const config = {
   darkMode: ["class"],
@@ -8,7 +8,6 @@ const config = {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
-  prefix: "",
   theme: {
     container: {
       center: true,
@@ -19,38 +18,32 @@ const config = {
     },
     extend: {
       colors: {
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+        primary: 'var(--primary)',
+        secondary: 'var(--secondary)',
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        error: 'var(--error)',
+        warning: 'var(--warning)',
+        info: 'var(--info)',
+        success: 'var(--success)',
+        'light-gray': 'var(--light-gray)',
+        'medium-gray': 'var(--medium-gray)',
+        'dark-gray': 'var(--dark-gray)',
+        'message-out': 'var(--message-out)',
+        'message-in': 'var(--message-in)',
+        accent: 'var(--accent)',
+        highlight: 'var(--highlight)',
+        attention: 'var(--attention)',
+        border: "var(--medium-gray)",
+        input: "var(--light-gray)",
+        ring: "var(--primary)",
+        muted: {
+          DEFAULT: "var(--light-gray)",
+          foreground: "var(--dark-gray)",
         },
         destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
+          DEFAULT: "var(--error)",
+          foreground: "var(--background)",
         },
       },
       borderRadius: {
@@ -75,6 +68,6 @@ const config = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-} satisfies Config
+} satisfies Config;
 
-export default config
+export default config;

@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ShoppingCart, User, LogOut, Package, Home } from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle"
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -51,6 +52,7 @@ export default function Navigation() {
           </Link>
           
           <div className="flex items-center space-x-4">
+            <ModeToggle />
             <Button variant="ghost" asChild>
               <Link href="/products">
                 <Package className="w-4 h-4 mr-2" />

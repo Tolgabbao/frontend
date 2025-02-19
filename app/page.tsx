@@ -91,13 +91,19 @@ const ProductList: React.FC = () => {
           }
           window.history.pushState({}, '', `?${params.toString()}`);
         }}>
-          <SelectTrigger>
+          <SelectTrigger className="w-[200px] bg-background border-medium-gray text-foreground">
             <SelectValue placeholder="Select Category" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+          <SelectContent className="bg-background border-medium-gray">
+            <SelectItem value="all" className="text-foreground hover:bg-light-gray">All Categories</SelectItem>
             {categories.map(cat => (
-              <SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
+              <SelectItem 
+                key={cat.id} 
+                value={cat.id.toString()}
+                className="text-foreground hover:bg-light-gray"
+              >
+                {cat.name}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -105,8 +111,11 @@ const ProductList: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {products.map((product) => (
-          <Card key={product.id}>
+          <Card key={product.id} className="border-medium-gray">
             <CardHeader>
+              <CardTitle className="text-xl font-semibold text-foreground mb-2">
+                {product.name}
+              </CardTitle>
               {product.image_url && (
                 <div className="aspect-w-16 aspect-h-9 mb-4">
                   <img
@@ -118,10 +127,10 @@ const ProductList: React.FC = () => {
               )}
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">{product.description}</p>
+              <p className="text-dark-gray">{product.description}</p>
               <div className="flex justify-between items-center mt-4">
-                <span className="text-lg font-bold">${product.price}</span>
-                <Badge variant={product.stock_quantity > 0 ? "secondary" : "destructive"}>
+                <span className="text-lg font-bold text-foreground">${product.price}</span>
+                <Badge variant={product.stock_quantity > 0 ? "default" : "destructive"} className="text-background">
                   <Package2 className="w-4 h-4 mr-1" />
                   {product.stock_quantity > 0 ? `${product.stock_quantity} in stock` : 'Out of stock'}
                 </Badge>
@@ -145,8 +154,8 @@ const ProductList: React.FC = () => {
             <CardFooter>
               {product.stock_quantity > 0 && (
                 <Button 
+                  className="w-full bg-primary text-background hover:bg-secondary"
                   onClick={() => addToCart(product.id)}
-                  className="w-full"
                 >
                   <ShoppingCart className="w-4 h-4 mr-2" />
                   Add to Cart
