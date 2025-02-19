@@ -117,11 +117,11 @@ const ProductList: React.FC = () => {
                 {product.name}
               </CardTitle>
               {product.image_url && (
-                <div className="aspect-w-16 aspect-h-9 mb-4">
+                <div className="aspect-square mb-4">
                   <img
-                    src={product.image_url}
-                    alt={product.name}
-                    className="object-cover rounded-lg w-full h-48"
+                  src={product.image_url}
+                  alt={product.name}
+                  className="object-cover rounded-lg w-full h-full"
                   />
                 </div>
               )}

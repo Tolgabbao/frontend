@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { authApi } from '@/api/auth';
 import { cartApi } from '@/api/cart';
 import { Button } from "@/components/ui/button";
@@ -18,29 +19,38 @@ import { ModeToggle } from "@/components/mode-toggle"
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
+  const [userDetails, setUserDetails] = useState<{ username: string } | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
-    const checkAuth = async () => {
+    const initializeUser = async () => {
       try {
         const status = await authApi.checkAuthStatus();
         setIsLoggedIn(status);
+        if (status) {
+          const details = await authApi.getUserDetails();
+          setUserDetails(details);
+        }
       } catch (error) {
+        console.error('Auth check failed:', error);
         setIsLoggedIn(false);
+        setUserDetails(null);
       }
     };
 
-    const fetchCartCount = async () => {
-      try {
-        const items = await cartApi.getCart();
-        setCartItemCount(items.reduce((acc, item) => acc + item.quantity, 0));
-      } catch (error) {
-        console.error('Error fetching cart:', error);
-      }
-    };
-
-    checkAuth();
-    //fetchCartCount();
+    initializeUser();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+      setIsLoggedIn(false);
+      setUserDetails(null);
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
+  };
 
   return (
     <nav className="border-b">
@@ -70,10 +80,10 @@ export default function Navigation() {
                 </Button>
                 
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                    <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar>
-                        <AvatarFallback>U</AvatarFallback>
+                      <AvatarFallback>{userDetails?.username ? userDetails.username[0].toUpperCase() : 'U'}</AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
@@ -90,7 +100,7 @@ export default function Navigation() {
                         Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-600">
+                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout
                     </DropdownMenuItem>
@@ -102,7 +112,7 @@ export default function Navigation() {
                 <Button variant="ghost" asChild>
                   <Link href="/login">Login</Link>
                 </Button>
-                <Button variant="default" asChild>
+                <Button variant="secondary" asChild>
                   <Link href="/register">Register</Link>
                 </Button>
               </>

@@ -49,7 +49,7 @@ export default function ProfilePage() {
         });
         if (ordersResponse.ok) {
           const ordersData = await ordersResponse.json();
-          setOrders(Array.isArray(ordersData) ? ordersData : []);
+          setOrders(ordersData);
         }
       } catch (error) {
         setError('Please log in to view your profile');

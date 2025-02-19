@@ -7,6 +7,12 @@ function getCookie(name: string): string {
   return '';
 }
 
+interface UserDetails {
+  username: string;
+  email: string;
+  id: number;
+}
+
 export const authApi = {
   login: async (email: string, password: string) => {
     const csrfToken = getCookie('csrftoken');
@@ -26,7 +32,7 @@ export const authApi = {
 
   checkAuthStatus: async () => {
     const csrfToken = getCookie('csrftoken');
-    const response = await fetch(`${BASE_URL}/auth/user/`, {
+    const response = await fetch(`${BASE_URL}/auth/status/`, {
       headers: {
         'X-CSRFToken': csrfToken
       },
@@ -48,6 +54,33 @@ export const authApi = {
     });
 
     if (!response.ok) throw new Error('Registration failed');
+    return response;
+  },
+
+  getUserDetails: async (): Promise<UserDetails> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/auth/user/`, {
+      headers: {
+        'X-CSRFToken': csrfToken
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch user details');
+    return response.json();
+  },
+
+  logout: async () => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/auth/logout/`, {
+      method: 'POST',
+      headers: {
+        'X-CSRFToken': csrfToken
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) throw new Error('Logout failed');
     return response;
   }
 };
