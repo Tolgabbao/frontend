@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Product, Category, productsApi } from '@/api/products';
+import { Category, productsApi } from '@/api/products';
 import { cartApi } from '@/api/cart';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Star, ShoppingCart, Package2 } from "lucide-react";
 
+interface Product {
+  id: number;
+  name: string;
+  description: string;
+  price: number;
+  stock_quantity: number;
+  average_rating: number;
+}
 
 const ProductList: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -116,15 +124,16 @@ const ProductList: React.FC = () => {
               <CardTitle className="text-xl font-semibold text-foreground mb-2">
                 {product.name}
               </CardTitle>
-              {product.image_url && (
-                <div className="aspect-square mb-4">
-                  <img
-                  src={product.image_url}
+              <div className="aspect-square mb-4">
+                <img
+                  src={`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}/image/`}
                   alt={product.name}
                   className="object-cover rounded-lg w-full h-full"
-                  />
-                </div>
-              )}
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              </div>
             </CardHeader>
             <CardContent>
               <p className="text-dark-gray">{product.description}</p>
