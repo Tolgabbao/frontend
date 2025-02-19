@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# E-Commerce Frontend
+
+A modern e-commerce frontend built with Next.js 14, TypeScript, and Tailwind CSS.
+
+## Features
+
+- 🛍️ Product browsing and filtering
+- 🛒 Shopping cart management
+- 👤 User authentication
+- 🌓 Dark/Light mode support
+- 🎨 Modern UI with shadcn/ui components
+- 📱 Responsive design
+
+## Tech Stack
+
+- Next.js 14 (App Router)
+- TypeScript
+- Tailwind CSS
+- shadcn/ui Components
+- Lucide Icons
+- next-themes
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18 or later
+- npm or yarn
+
+### Installation
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Install dependencies
+npm install
+
+# Create .env.local file
+cp .env.example .env.local
+
+# Update environment variables
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Run development server
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Visit `http://localhost:3000`
 
-## Learn More
+### Building for Production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+# Create production build
+npm run build
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Start production server
+npm start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+frontend/
+├── app/                  # App router pages
+├── components/          # Reusable components
+│   ├── ui/             # shadcn/ui components
+│   └── ...             # Custom components
+├── api/                # API integration
+├── lib/                # Utility functions
+└── public/             # Static assets
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## API Integration
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The frontend communicates with a Django REST backend. Main API endpoints:
+
+- `/auth/*` - Authentication endpoints
+- `/api/products/*` - Product management
+- `/api/carts/*` - Shopping cart operations
+- `/api/orders/*` - Order management
+
+## Component Library
+
+We use shadcn/ui for UI components. Key components:
+
+- Button
+- Card
+- Select
+- Badge
+- Avatar
+- DropdownMenu
+
+## Theme System
+
+The app supports system, light, and dark themes using `next-themes`. Theme variables are defined in `globals.css`.
+
+## Contributing
+
+1. Follow the existing code style
+2. Use TypeScript for type safety
+3. Implement responsive designs
+4. Add proper error handling
