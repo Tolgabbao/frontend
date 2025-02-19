@@ -4,6 +4,15 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { authApi } from '@/api/auth';
 import { cartApi } from '@/api/cart';
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ShoppingCart, User, LogOut, Package, Home } from "lucide-react";
 
 export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -33,25 +42,67 @@ export default function Navigation() {
   }, []);
 
   return (
-    <nav className="bg-background shadow-lg">
+    <nav className="border-b">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex justify-between items-center h-16">
-          <Link href="/" className="text-xl font-bold text-foreground">E-Commerce</Link>
+          <Link href="/" className="flex items-center space-x-2">
+            <Home className="w-6 h-6" />
+            <span className="font-bold">E-Commerce</span>
+          </Link>
           
           <div className="flex items-center space-x-4">
-            <Link href="/products" className="text-foreground hover:text-secondary">Products</Link>
+            <Button variant="ghost" asChild>
+              <Link href="/products">
+                <Package className="w-4 h-4 mr-2" />
+                Products
+              </Link>
+            </Button>
+            
             {isLoggedIn ? (
               <>
-                <Link href="/cart" className="text-foreground hover:text-secondary">
-                  Cart ({cartItemCount})
-                </Link>
-                <Link href="/orders" className="text-foreground hover:text-secondary">Orders</Link>
-                <Link href="/profile" className="text-foreground hover:text-secondary">Profile</Link>
+                <Button variant="ghost" asChild>
+                  <Link href="/cart">
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Cart ({cartItemCount})
+                  </Link>
+                </Button>
+                
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar>
+                        <AvatarFallback>U</AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link href="/profile">
+                        <User className="w-4 h-4 mr-2" />
+                        Profile
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/orders">
+                        <Package className="w-4 h-4 mr-2" />
+                        Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-red-600">
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>
-                <Link href="/login" className="text-foreground hover:text-secondary">Login</Link>
-                <Link href="/register" className="text-foreground hover:text-secondary">Register</Link>
+                <Button variant="ghost" asChild>
+                  <Link href="/login">Login</Link>
+                </Button>
+                <Button variant="default" asChild>
+                  <Link href="/register">Register</Link>
+                </Button>
               </>
             )}
           </div>

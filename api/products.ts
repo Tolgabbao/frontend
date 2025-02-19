@@ -14,6 +14,7 @@ export interface Product {
   average_rating: number;
   category: Category;
   comments: ProductComment[];
+  image_url: string;
 }
 
 export interface ProductComment {

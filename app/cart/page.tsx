@@ -15,7 +15,7 @@ export default function CartPage() {
   const fetchCart = async () => {
     try {
       const data = await cartApi.getCart();
-      setCartItems(data);
+      setCartItems(Array.isArray(data) ? data : []);
     } catch (error) {
       setError('Failed to load cart items');
     } finally {
@@ -44,7 +44,7 @@ export default function CartPage() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
-  const total = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const total = cartItems?.length ? cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0) : 0;
 
   return (
     <div className="max-w-2xl mx-auto">
