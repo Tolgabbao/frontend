@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { authApi } from '@/api/auth';
 import { cartApi } from '@/api/cart';
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ export default function Navigation() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [cartItemCount, setCartItemCount] = useState(0);
   const [userDetails, setUserDetails] = useState<{ username: string } | null>(null);
-  const router = useRouter();
 
   useEffect(() => {
     const initializeUser = async () => {
@@ -46,7 +45,8 @@ export default function Navigation() {
       await authApi.logout();
       setIsLoggedIn(false);
       setUserDetails(null);
-      router.push('/login');
+      // Use redirect instead of router.push
+      redirect('/login');
     } catch (error) {
       console.error('Logout failed:', error);
     }
