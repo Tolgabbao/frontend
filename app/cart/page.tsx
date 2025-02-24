@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CartItem, cartApi } from '@/api/cart';
+import { CartItem, CartResponse, cartApi } from '@/api/cart';
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -15,7 +15,7 @@ export default function CartPage() {
   const fetchCart = async () => {
     try {
       const data = await cartApi.getCart();
-      setCartItems(Array.isArray(data) ? data : []);
+      setCart(data);
     } catch (error) {
       setError('Failed to load cart items');
     } finally {
@@ -44,20 +44,18 @@ export default function CartPage() {
   if (loading) return <div>Loading...</div>;
   if (error) return <div className="text-red-500">{error}</div>;
 
-  const total = cartItems?.length ? cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0) : 0;
-
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Shopping Cart</h1>
-      {cartItems.length === 0 ? (
+      {!cart?.items.length ? (
         <p>Your cart is empty</p>
       ) : (
         <>
-          {cartItems.map((item) => (
+          {cart.items.map((item) => (
             <div key={item.id} className="flex items-center justify-between border-b py-2">
               <div>
-                <p>{item.product.name}</p>
-                <p className="text-gray-500">${item.product.price}</p>
+                <p>{item.product_name}</p>
+                <p className="text-gray-500">${item.product_price}</p>
               </div>
               <div className="flex items-center space-x-2">
                 <button
@@ -71,14 +69,13 @@ export default function CartPage() {
                 <button onClick={() => removeItem(item.id)}>Remove</button>
               </div>
             </div>
-            ))}
-            <div className="flex justify-between mt-4">
-                <p className="font-bold">Total</p>
-                <p>${total.toFixed(2)}</p>
-            </div>
+          ))}
+          <div className="flex justify-between mt-4">
+            <p className="font-bold">Total</p>
+            <p>${cart.total.toFixed(2)}</p>
+          </div>
         </>
-        )}
+      )}
     </div>
-    );
-
+  );
 }

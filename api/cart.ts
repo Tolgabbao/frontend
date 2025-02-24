@@ -4,24 +4,28 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const getCSRFToken = () => {
   const name = 'csrftoken';
   const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
+  const parts = value.split(`; ${name}=`); 
   if (parts.length === 2) return parts.pop()?.split(';').shift();
   return '';
 };
 
+export interface CartResponse {
+  id: number;
+  items: CartItem[];
+  total: number;
+}
+
 export interface CartItem {
   id: number;
-  product: {
-    id: number;
-    name: string;
-    price: number;
-  };
+  product: number;
+  product_name: string;
+  product_price: string;
   quantity: number;
 }
 
 export const cartApi = {
-  getCart: async (): Promise<CartItem[]> => {
-    const response = await fetch(`${BASE_URL}/api/carts/`, {
+  getCart: async (): Promise<CartResponse> => {
+    const response = await fetch(`${BASE_URL}/api/carts/items`, {
       credentials: 'include'
     });
     if (!response.ok) throw new Error('Failed to fetch cart');
