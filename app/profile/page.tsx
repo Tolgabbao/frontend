@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { authApi } from '@/api/auth';
 
 interface Order {
   id: number;
@@ -49,7 +50,8 @@ export default function ProfilePage() {
         });
         if (ordersResponse.ok) {
           const ordersData = await ordersResponse.json();
-          setOrders(ordersData);
+          // TODO the data got from the orders api doesn't match the data needed here
+          //setOrders(ordersData);
         }
       } catch (error) {
         setError('Please log in to view your profile');
@@ -64,12 +66,10 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:8000/auth/logout/', {
-        method: 'POST',
-        credentials: 'include',
-      });
+      await authApi.logout();
       router.push('/login');
     } catch (error) {
+      console.error('Failed to logout');
       setError('Failed to logout');
     }
   };

@@ -32,7 +32,7 @@ export const authApi = {
 
   checkAuthStatus: async () => {
     const csrfToken = getCookie('csrftoken');
-    const response = await fetch(`${BASE_URL}/auth/status/`, {
+    const response = await fetch(`${BASE_URL}/auth/user/`, {
       headers: {
         'X-CSRFToken': csrfToken
       },
