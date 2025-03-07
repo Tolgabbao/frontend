@@ -1,8 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { authApi } from '@/api/auth';
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { authApi } from "@/api/auth";
+import { UserDetails } from "@/contexts/AuthContext";
 
 interface Order {
   id: number;
@@ -18,44 +19,52 @@ interface Order {
   }[];
 }
 
-interface UserProfile {
-  username: string;
-  email: string;
-  date_joined: string;
-}
-
 export default function ProfilePage() {
   const router = useRouter();
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<UserDetails | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         // Fetch user profile
-        const profileResponse = await fetch('http://localhost:8000/auth/user/', {
-          credentials: 'include',
-        });
-        if (!profileResponse.ok) {
-          throw new Error('Not authenticated');
-        }
-        const profileData = await profileResponse.json();
-        setProfile(profileData);
+        const profile = await authApi.getUserDetails();
+        setProfile(profile);
 
         // Fetch order history
-        const ordersResponse = await fetch('http://localhost:8000/api/orders/', {
-          credentials: 'include',
-        });
+        const ordersResponse = await fetch(
+          "http://localhost:8000/api/orders/",
+          {
+            credentials: "include",
+          },
+        );
         if (ordersResponse.ok) {
           const ordersData = await ordersResponse.json();
-          // TODO the data got from the orders api doesn't match the data needed here
-          //setOrders(ordersData);
+
+          // Make sure ordersData is an array
+          if (Array.isArray(ordersData)) {
+            setOrders(ordersData);
+          } else if (
+            ordersData &&
+            ordersData.results &&
+            Array.isArray(ordersData.results)
+          ) {
+            // If API returns paginated results
+            setOrders(ordersData.results);
+          } else if (ordersData && typeof ordersData === "object") {
+            // If API returns a single order as object
+            setOrders([ordersData]);
+          } else {
+            console.error("Invalid orders data format:", ordersData);
+            setOrders([]);
+          }
         }
       } catch (error) {
-        setError('Please log in to view your profile');
-        router.push('/login');
+        setError("Please log in to view your profile");
+        console.error("Failed to fetch profile data:", error);
+        router.push("/login");
       } finally {
         setLoading(false);
       }
@@ -67,10 +76,10 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       await authApi.logout();
-      router.push('/login');
+      router.push("/login");
     } catch (error) {
-      console.error('Failed to logout');
-      setError('Failed to logout');
+      console.error("Failed to logout", error);
+      setError("Failed to logout");
     }
   };
 
@@ -83,11 +92,7 @@ export default function ProfilePage() {
   }
 
   if (error) {
-    return (
-      <div className="text-error text-center mt-8">
-        {error}
-      </div>
-    );
+    return <div className="text-error text-center mt-8">{error}</div>;
   }
 
   return (
@@ -107,7 +112,7 @@ export default function ProfilePage() {
             <div>
               <label className="text-dark-gray">Member Since</label>
               <p className="text-foreground font-medium">
-                {new Date(profile.date_joined).toLocaleDateString()}
+                {new Date(profile.date_joined || "").toLocaleDateString()}
               </p>
             </div>
             <button
@@ -121,20 +126,28 @@ export default function ProfilePage() {
       </div>
 
       <div className="bg-background border border-medium-gray rounded-lg p-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">Order History</h2>
-        {orders.length === 0 ? (
+        <h2 className="text-xl font-bold text-foreground mb-4">
+          Order History
+        </h2>
+        {!orders || orders.length === 0 ? (
           <p className="text-dark-gray">No orders found</p>
         ) : (
           <div className="space-y-4">
             {orders.map((order) => (
               <div key={order.id} className="border-b border-medium-gray pb-4">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-foreground font-medium">Order #{order.id}</span>
-                  <span className={`px-2 py-1 rounded text-sm ${
-                    order.status === 'DELIVERED' ? 'bg-success text-background' :
-                    order.status === 'PROCESSING' ? 'bg-warning text-background' :
-                    'bg-error text-background'
-                  }`}>
+                  <span className="text-foreground font-medium">
+                    Order #{order.id}
+                  </span>
+                  <span
+                    className={`px-2 py-1 rounded text-sm ${
+                      order.status === "DELIVERED"
+                        ? "bg-success text-background"
+                        : order.status === "PROCESSING"
+                          ? "bg-warning text-background"
+                          : "bg-error text-background"
+                    }`}
+                  >
                     {order.status}
                   </span>
                 </div>
@@ -142,15 +155,23 @@ export default function ProfilePage() {
                   {new Date(order.created_at).toLocaleDateString()}
                 </div>
                 <div className="mt-2">
-                  {order.items.map((item, index) => (
-                    <div key={index} className="flex justify-between text-sm">
-                      <span>{item.product.name} x{item.quantity}</span>
-                      <span>${(item.product.price * item.quantity).toFixed(2)}</span>
-                    </div>
-                  ))}
+                  {order.items && Array.isArray(order.items) ? (
+                    order.items.map((item, index) => (
+                      <div key={index} className="flex justify-between text-sm">
+                        <span>
+                          {item.product.name} x{item.quantity}
+                        </span>
+                        <span>
+                          ${(item.product.price * item.quantity).toFixed(2)}
+                        </span>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-sm">No items found</div>
+                  )}
                 </div>
                 <div className="mt-2 text-right font-bold">
-                  Total: ${order.total.toFixed(2)}
+                  Total: ${(order.total || 0).toFixed(2)}
                 </div>
               </div>
             ))}

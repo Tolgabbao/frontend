@@ -1,35 +1,45 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-
-import { authApi } from '@/api/auth';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
     try {
-        const response = await authApi.login(email, password);
-      if (response.ok) {
-        router.push('/');
+      const success = await login(email, password);
+      if (success) {
+        router.push("/");
       } else {
-        setError('Invalid credentials');
+        setError("Invalid credentials");
       }
     } catch (error) {
-      setError('An error occurred. Please try again.');
+      setError("An error occurred during login");
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="max-w-md mx-auto mt-10">
       <h1 className="text-2xl font-bold mb-5 text-foreground">Login</h1>
-      {error && <div className="text-error mb-4">{error}</div>}
+      {error && (
+        <div className="text-error mb-4 p-3 rounded bg-error/10">{error}</div>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1 text-foreground">Email</label>
@@ -51,12 +61,19 @@ export default function LoginPage() {
             required
           />
         </div>
-        <button type="submit" className="w-full bg-primary text-background p-2 rounded hover:bg-secondary">
-          Login
-        </button>
+        <Button
+          type="submit"
+          className="w-full bg-primary text-background p-2 rounded hover:bg-secondary"
+          disabled={isLoading}
+        >
+          {isLoading ? "Logging in..." : "Login"}
+        </Button>
       </form>
       <p className="mt-4 text-center text-foreground">
-        Don't have an account? <Link href="/register" className="text-accent hover:text-secondary">Register</Link>
+        Don&apos;t have an account?{" "}
+        <Link href="/register" className="text-accent hover:text-secondary">
+          Register
+        </Link>
       </p>
     </div>
   );

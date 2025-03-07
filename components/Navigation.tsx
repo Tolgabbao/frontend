@@ -1,54 +1,39 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { redirect } from 'next/navigation';
-import { authApi } from '@/api/auth';
-import { cartApi } from '@/api/cart';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { ShoppingCart, User, LogOut, Package, Home } from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle"
+import {
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+  Home,
+  Settings,
+} from "lucide-react";
+import { ModeToggle } from "@/components/mode-toggle";
+import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 
 export default function Navigation() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [cartItemCount, setCartItemCount] = useState(0);
-  const [userDetails, setUserDetails] = useState<{ username: string } | null>(null);
-
-  useEffect(() => {
-    const initializeUser = async () => {
-      try {
-        const status = await authApi.checkAuthStatus();
-        setIsLoggedIn(status);
-        if (status) {
-          const details = await authApi.getUserDetails();
-          setUserDetails(details);
-        }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setIsLoggedIn(false);
-        setUserDetails(null);
-      }
-    };
-
-    initializeUser();
-  }, []);
+  const { user, isAuthenticated, logout } = useAuth();
+  const { cartItemCount } = useCart();
+  const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await authApi.logout();
-      setIsLoggedIn(false);
-      setUserDetails(null);
-      // Use redirect instead of router.push
-      redirect('/login');
+      await logout();
+      router.push("/login");
     } catch (error) {
-      console.error('Logout failed:', error);
+      console.error("Logout failed:", error);
     }
   };
 
@@ -60,7 +45,7 @@ export default function Navigation() {
             <Home className="w-6 h-6" />
             <span className="font-bold">E-Commerce</span>
           </Link>
-          
+
           <div className="flex items-center space-x-4">
             <ModeToggle />
             <Button variant="ghost" asChild>
@@ -69,38 +54,76 @@ export default function Navigation() {
                 Products
               </Link>
             </Button>
-            
-            {isLoggedIn ? (
+
+            {/* Cart is available for all users */}
+            <Button variant="ghost" asChild>
+              <Link href="/cart" className="relative">
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Cart
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-primary text-white rounded-full w-5 h-5 flex items-center justify-center text-xs">
+                    {cartItemCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
+
+            {isAuthenticated ? (
               <>
-                <Button variant="ghost" asChild>
-                  <Link href="/cart">
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Cart ({cartItemCount})
-                  </Link>
-                </Button>
-                
                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                    >
                       <Avatar>
-                      <AvatarFallback>{userDetails?.username ? userDetails.username[0].toUpperCase() : 'U'}</AvatarFallback>
+                        <AvatarFallback>
+                          {user?.username
+                            ? user.username[0].toUpperCase()
+                            : "U"}
+                        </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-56 bg-background border shadow-md"
+                    sideOffset={5}
+                  >
                     <DropdownMenuItem asChild>
-                      <Link href="/profile">
+                      <Link href="/profile" className="flex items-center">
                         <User className="w-4 h-4 mr-2" />
                         Profile
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
-                      <Link href="/orders">
+                      <Link href="/orders" className="flex items-center">
                         <Package className="w-4 h-4 mr-2" />
                         Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleLogout} className="text-red-600">
+
+                    {/* Show Admin Panel link only if user is staff */}
+                    {user?.is_staff && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                          <Link
+                            href="/admin/products"
+                            className="flex items-center"
+                          >
+                            <Settings className="w-4 h-4 mr-2" />
+                            Admin Panel
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={handleLogout}
+                      className="text-red-600 cursor-pointer"
+                    >
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout
                     </DropdownMenuItem>

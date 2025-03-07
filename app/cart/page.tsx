@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { CartItem, CartResponse, cartApi } from '@/api/cart';
+import { useEffect, useState } from "react";
+import { CartResponse, cartApi } from "@/api/cart";
 
 export default function CartPage() {
   const [cart, setCart] = useState<CartResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchCart();
@@ -17,7 +17,8 @@ export default function CartPage() {
       const data = await cartApi.getCart();
       setCart(data);
     } catch (error) {
-      setError('Failed to load cart items');
+      setError("Failed to load cart items");
+      console.error("Error fetching cart:", error);
     } finally {
       setLoading(false);
     }
@@ -28,7 +29,8 @@ export default function CartPage() {
       await cartApi.updateQuantity(itemId, newQuantity);
       fetchCart();
     } catch (error) {
-      setError('Failed to update quantity');
+      console.error("Error updating quantity:", error);
+      setError("Failed to update quantity");
     }
   };
 
@@ -37,7 +39,8 @@ export default function CartPage() {
       await cartApi.removeItem(itemId);
       fetchCart();
     } catch (error) {
-      setError('Failed to remove item');
+      console.error("Error removing item:", error);
+      setError("Failed to remove item");
     }
   };
 
@@ -52,7 +55,10 @@ export default function CartPage() {
       ) : (
         <>
           {cart.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between border-b py-2">
+            <div
+              key={item.id}
+              className="flex items-center justify-between border-b py-2"
+            >
               <div>
                 <p>{item.product_name}</p>
                 <p className="text-gray-500">${item.product_price}</p>
@@ -65,7 +71,11 @@ export default function CartPage() {
                   -
                 </button>
                 <span>{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.id, item.quantity + 1)}>+</button>
+                <button
+                  onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                >
+                  +
+                </button>
                 <button onClick={() => removeItem(item.id)}>Remove</button>
               </div>
             </div>
