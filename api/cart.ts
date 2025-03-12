@@ -2,11 +2,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Function to get CSRF token from cookies
 const getCSRFToken = () => {
-  const name = 'csrftoken';
+  const name = "csrftoken";
   const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`); 
-  if (parts.length === 2) return parts.pop()?.split(';').shift();
-  return '';
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(";").shift();
+  return "";
 };
 
 export interface CartResponse {
@@ -26,48 +26,47 @@ export interface CartItem {
 export const cartApi = {
   getCart: async (): Promise<CartResponse> => {
     const response = await fetch(`${BASE_URL}/api/carts/items`, {
-      credentials: 'include'
+      credentials: "include",
     });
-    if (!response.ok) throw new Error('Failed to fetch cart');
+    if (!response.ok) throw new Error("Failed to fetch cart");
     return response.json();
   },
 
   addToCart: async (productId: number, quantity: number) => {
     const response = await fetch(`${BASE_URL}/api/carts/add/`, {
-      method: 'POST',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken() || ''
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken() || "",
       },
       body: JSON.stringify({ product_id: productId, quantity }),
-      credentials: 'include'
+      credentials: "include",
     });
-    if (!response.ok) throw new Error('Failed to add to cart');
+    if (!response.ok) throw new Error("Failed to add to cart");
     return response.json();
   },
 
-  updateQuantity: async (itemId: number, quantity: number) => {
-    const response = await fetch(`${BASE_URL}/api/carts/${itemId}/`, {
-      method: 'PATCH',
-      headers: { 
-        'Content-Type': 'application/json',
-        'X-CSRFToken': getCSRFToken() || ''
+  updateQuantity: async (product_id: number, quantity: number) => {
+    const response = await fetch(`${BASE_URL}/api/carts/update/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCSRFToken() || "",
       },
-      body: JSON.stringify({ quantity }),
-      credentials: 'include'
+      body: JSON.stringify({ product_id, quantity }),
+      credentials: "include",
     });
-    if (!response.ok) throw new Error('Failed to update quantity');
-    return response.json();
+    if (!response.ok) throw new Error("Failed to update quantity");
   },
 
   removeItem: async (itemId: number) => {
     const response = await fetch(`${BASE_URL}/api/carts/${itemId}/`, {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'X-CSRFToken': getCSRFToken() || ''
+        "X-CSRFToken": getCSRFToken() || "",
       },
-      credentials: 'include'
+      credentials: "include",
     });
-    if (!response.ok) throw new Error('Failed to remove item');
-  }
+    if (!response.ok) throw new Error("Failed to remove item");
+  },
 };

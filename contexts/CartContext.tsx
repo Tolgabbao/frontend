@@ -74,14 +74,26 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const updateQuantity = async (productId: number, quantity: number) => {
+  const updateQuantity = async (itemId: number, quantity: number) => {
     setIsLoading(true);
+    setError(null);
     try {
-      const updatedCart = await cartApi.updateQuantity(productId, quantity);
-      setCart(updatedCart);
+      // Find the item in the cart to get its product ID
+      const item = cart?.items.find((item) => item.id === itemId);
+
+      if (!item) {
+        throw new Error("Item not found in cart");
+      }
+
+      // Call the API with the product ID and new quantity
+      await cartApi.updateQuantity(item.product, quantity);
+
+      // Refresh the cart to get the updated state
+      await refreshCart();
     } catch (err) {
       console.error("Error updating cart item quantity:", err);
       setError("Failed to update quantity");
+      throw err;
     } finally {
       setIsLoading(false);
     }

@@ -6,6 +6,21 @@ export interface Category {
   description: string;
 }
 
+export interface ProductComment {
+  id: number;
+  user: string;
+  content: string;
+  created_at: string;
+}
+
+export interface ProductImage {
+  id: number;
+  image_url: string;
+  alt_text: string;
+  is_primary: boolean;
+  upload_date: string;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -17,13 +32,8 @@ export interface Product {
   comments: ProductComment[];
   image_url: string;
   is_visible: boolean; // Changed from boolean | undefined to boolean
-}
-
-export interface ProductComment {
-  id: number;
-  user: string;
-  content: string;
-  created_at: string;
+  images: ProductImage[];
+  main_image_url: string;
 }
 
 interface ProductQueryParams {
@@ -319,5 +329,158 @@ export const productsApi = {
     if (!response.ok) {
       throw new Error("Failed to delete product");
     }
+  },
+
+  getProductImages: async (productId: number): Promise<ProductImage[]> => {
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/images/`,
+      {
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch product images");
+    }
+
+    return response.json();
+  },
+
+  addProductImage: async (
+    productId: number,
+    imageData: string,
+    isPrimary: boolean = false,
+  ): Promise<ProductImage> => {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/images/`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          image: imageData,
+          is_primary: isPrimary,
+        }),
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to add product image");
+    }
+
+    return response.json();
+  },
+
+  setPrimaryImageById: async (
+    productId: number,
+    imageId: number,
+  ): Promise<void> => {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/images/${imageId}/set_primary/`,
+      {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to set primary image");
+    }
+  },
+
+  deleteProductImage: async (
+    productId: number,
+    imageId: number,
+  ): Promise<void> => {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/images/${imageId}/`,
+      {
+        method: "DELETE",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "include",
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete product image");
+    }
+  },
+
+  async uploadProductImage(
+    productId: number,
+    formData: FormData,
+  ): Promise<ProductImage> {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/add_image/`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to upload image");
+    }
+
+    return await response.json();
+  },
+
+  async removeProductImage(productId: number, imageId: number): Promise<void> {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/remove_image/?image_id=${imageId}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to delete image");
+    }
+  },
+
+  async setPrimaryImage(
+    productId: number,
+    imageId: number,
+  ): Promise<ProductImage> {
+    const csrfToken = getCookie("csrftoken");
+    const response = await fetch(
+      `${BASE_URL}/api/products/${productId}/set_primary_image/`,
+      {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({ image_id: imageId }),
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to set primary image");
+    }
+
+    return await response.json();
   },
 };

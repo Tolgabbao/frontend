@@ -3,20 +3,30 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Product, productsApi } from "@/api/products";
-import ProductImage from "@/components/ProductImage";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, ShoppingCart } from "lucide-react";
+import {
+  Star,
+  ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
+  Package,
+} from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const { addItem } = useCart();
+
+  // Get the API base URL for constructing full image URLs
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -28,6 +38,9 @@ export default function ProductDetailPage() {
             : 0;
         const data = await productsApi.getProduct(productId);
         setProduct(data);
+
+        // Reset image index when product changes
+        setCurrentImageIndex(0);
       } catch (error) {
         console.error("Error fetching product:", error);
         setError("Failed to load product details");
@@ -44,11 +57,24 @@ export default function ProductDetailPage() {
 
     try {
       await addItem(product.id, 1);
-      toast.success("Product added to cart");
+      toast.success("Added to cart!");
     } catch (error) {
-      console.error("Failed to add to cart:", error);
-      toast.error("Failed to add product to cart");
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add to cart");
     }
+  };
+
+  // Calculate total number of images
+  const totalImages = product?.images?.length || 0;
+
+  const goToPrevImage = () => {
+    if (totalImages <= 1) return;
+    setCurrentImageIndex((prev) => (prev - 1 + totalImages) % totalImages);
+  };
+
+  const goToNextImage = () => {
+    if (totalImages <= 1) return;
+    setCurrentImageIndex((prev) => (prev + 1) % totalImages);
   };
 
   if (loading) {
@@ -70,12 +96,84 @@ export default function ProductDetailPage() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="relative aspect-square rounded-lg overflow-hidden">
-        <ProductImage
-          productId={product.id}
-          alt={product.name}
-          className="rounded-lg"
-        />
+      {/* Image gallery */}
+      <div className="space-y-4">
+        <div className="relative aspect-square rounded-lg overflow-hidden">
+          {/* Main product image */}
+          {product?.images && product.images.length > 0 ? (
+            <div className="relative w-full h-full">
+              <Image
+                src={
+                  // Ensure the URL is pointing to the backend server
+                  product.images[currentImageIndex].image_url.startsWith("http")
+                    ? product.images[currentImageIndex].image_url
+                    : `${apiBaseUrl}${product.images[currentImageIndex].image_url}`
+                }
+                alt={product.images[currentImageIndex].alt_text || product.name}
+                fill
+                className="object-contain"
+                priority
+                unoptimized
+              />
+            </div>
+          ) : (
+            <div className="bg-light-gray w-full h-full flex items-center justify-center">
+              <Package className="w-24 h-24 text-medium-gray" />
+            </div>
+          )}
+
+          {/* Navigation arrows - only show if multiple images */}
+          {totalImages > 1 && (
+            <div className="absolute inset-0 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full bg-background/80"
+                onClick={goToPrevImage}
+              >
+                <ChevronLeft className="h-6 w-6" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full bg-background/80"
+                onClick={goToNextImage}
+              >
+                <ChevronRight className="h-6 w-6" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Thumbnails - only show if multiple images */}
+        {totalImages > 1 && (
+          <div className="flex gap-2 overflow-x-auto">
+            {product?.images?.map((image, index) => (
+              <div
+                key={image.id}
+                className={`relative w-16 h-16 cursor-pointer ${
+                  index === currentImageIndex ? "ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setCurrentImageIndex(index)}
+              >
+                <Image
+                  src={
+                    // Ensure the URL is pointing to the backend server
+                    image.image_url.startsWith("http")
+                      ? image.image_url
+                      : `${apiBaseUrl}${image.image_url}`
+                  }
+                  alt={
+                    image.alt_text || `${product.name} thumbnail ${index + 1}`
+                  }
+                  fill
+                  className="object-cover rounded"
+                  unoptimized
+                />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
@@ -93,7 +191,9 @@ export default function ProductDetailPage() {
             />
           ))}
           <span className="ml-2 text-sm text-muted-foreground">
-            (#AVERAGE RATING TO BE ADDED LATER)
+            {product.average_rating
+              ? product.average_rating.toFixed(1)
+              : "Not rated"}
           </span>
         </div>
 
@@ -131,6 +231,14 @@ export default function ProductDetailPage() {
             <li className="flex justify-between">
               <span className="text-muted-foreground">Category:</span>
               <span>{product.category?.name || "Uncategorized"}</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Model:</span>
+              <span>{product.model || "N/A"}</span>
+            </li>
+            <li className="flex justify-between">
+              <span className="text-muted-foreground">Warranty:</span>
+              <span>{product.warranty_months} months</span>
             </li>
             {/* Add more product details as needed */}
           </ul>

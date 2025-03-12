@@ -4,13 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { Category, productsApi } from "@/api/products";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -23,6 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, ShoppingCart, Package } from "lucide-react";
 import { toast } from "sonner";
 import { useCart } from "@/contexts/CartContext";
+import Link from "next/link";
 
 interface Product {
   id: number;
@@ -31,6 +26,7 @@ interface Product {
   price: number;
   stock_quantity: number;
   average_rating: number;
+  main_image_url?: string;
 }
 
 export default function ProductsContent() {
@@ -38,7 +34,6 @@ export default function ProductsContent() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [failedImages, setFailedImages] = useState<Record<number, boolean>>({});
   const searchParams = useSearchParams();
 
   const { addItem } = useCart();
@@ -97,13 +92,6 @@ export default function ProductsContent() {
     }
   }
 
-  const handleImageError = (productId: number) => {
-    setFailedImages((prev) => ({
-      ...prev,
-      [productId]: true,
-    }));
-  };
-
   const handleCategoryChange = (value: string) => {
     const url = new URL(window.location.href);
     if (value !== "all") {
@@ -115,6 +103,9 @@ export default function ProductsContent() {
     // We need to manually trigger a refetch since pushState doesn't trigger a navigation
     fetchProducts();
   };
+
+  // Get the API base URL for constructing full image URLs
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
   if (loading) {
     return (
@@ -165,35 +156,45 @@ export default function ProductsContent() {
       </div>
 
       {products && products.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {products.map((product) => (
             <Card
               key={product.id}
-              className="border-medium-gray hover:border-primary transition-colors"
+              className="overflow-hidden transition-shadow hover:shadow-lg"
             >
-              <CardHeader>
-                <div className="aspect-square mb-3 relative">
-                  {!failedImages[product.id] ? (
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}/image/`}
-                      alt={product.name}
-                      className="object-cover rounded-lg"
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                      onError={() => handleImageError(product.id)}
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-light-gray rounded-lg">
-                      <Package className="w-16 h-16 text-medium-gray" />
-                    </div>
-                  )}
-                </div>
-                <CardTitle className="text-lg font-semibold mb-1">
-                  {product.name}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+              <Link
+                href={`/products/${product.id}`}
+                className="block aspect-square relative overflow-hidden"
+              >
+                {product.main_image_url ? (
+                  <Image
+                    src={
+                      // Ensure the URL is pointing to the backend server
+                      product.main_image_url.startsWith("http")
+                        ? product.main_image_url
+                        : `${apiBaseUrl}${product.main_image_url}`
+                    }
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 33vw"
+                    className="object-contain transition-transform duration-300 hover:scale-105"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="h-full w-full bg-light-gray flex items-center justify-center">
+                    <Package className="w-12 h-12 text-medium-gray" />
+                  </div>
+                )}
+              </Link>
+              <CardContent className="p-4">
+                <Link
+                  href={`/products/${product.id}`}
+                  className="block hover:underline"
+                >
+                  <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-1">
+                    {product.name}
+                  </h3>
+                </Link>
                 <p className="text-dark-gray text-sm line-clamp-2">
                   {product.description}
                 </p>
@@ -215,7 +216,7 @@ export default function ProductsContent() {
                     <Star
                       key={i}
                       className={`w-3 h-3 ${
-                        i < Math.floor(product.average_rating)
+                        i < Math.floor(product.average_rating || 0)
                           ? "fill-yellow-400 text-yellow-400"
                           : "fill-gray-200 text-gray-200"
                       }`}
@@ -224,15 +225,17 @@ export default function ProductsContent() {
                 </div>
               </CardContent>
               <CardFooter>
-                {product.stock_quantity > 0 && (
-                  <Button
-                    className="w-full bg-primary text-background hover:bg-secondary"
-                    onClick={() => handleAddToCart(product.id)}
-                  >
-                    <ShoppingCart className="w-4 h-4 mr-2" />
-                    Add to Cart
-                  </Button>
-                )}
+                <Button
+                  className="w-full"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleAddToCart(product.id);
+                  }}
+                  disabled={product.stock_quantity <= 0}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Add to Cart
+                </Button>
               </CardFooter>
             </Card>
           ))}

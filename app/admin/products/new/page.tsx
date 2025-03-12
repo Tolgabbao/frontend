@@ -31,7 +31,7 @@ interface ProductFormData {
   warranty_months: number;
   distributor_info: string;
   is_visible: boolean;
-  image?: File | null;
+  image_upload?: File | null;
 }
 
 export default function NewProductPage() {
@@ -115,7 +115,7 @@ export default function NewProductPage() {
     if (file) {
       setFormData({
         ...formData,
-        image: file,
+        image_upload: file, // Changed from image to image_upload to match backend
       });
 
       // Create image preview
@@ -135,13 +135,13 @@ export default function NewProductPage() {
       // Create FormData object for multipart form submission
       const submitData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "image") {
+        if (key !== "image_upload") {
           submitData.append(key, value.toString());
         }
       });
 
-      if (formData.image) {
-        submitData.append("image", formData.image);
+      if (formData.image_upload) {
+        submitData.append("image_upload", formData.image_upload);
       }
 
       await productsApi.createProduct(submitData);
@@ -370,7 +370,7 @@ export default function NewProductPage() {
                       <div className="flex flex-col items-center justify-center py-6">
                         <Upload className="h-10 w-10 text-gray-400 mb-2" />
                         <p className="text-sm text-gray-500">
-                          Click to upload image
+                          Click to upload main image
                         </p>
                       </div>
                     )}
@@ -389,7 +389,7 @@ export default function NewProductPage() {
                     variant="destructive"
                     onClick={() => {
                       setImagePreview(null);
-                      setFormData({ ...formData, image: null });
+                      setFormData({ ...formData, image_upload: null });
                     }}
                   >
                     Remove
