@@ -1,9 +1,11 @@
+// Main address doesn't show up on profile page
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/api/auth";
 import { UserDetails } from "@/contexts/AuthContext";
+import AddressesSection from "../../components/AddressesSection"; // Import the new component
 
 interface Order {
   id: number;
@@ -25,6 +27,7 @@ export default function ProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState("profile"); // Added for tab navigation
 
   useEffect(() => {
     const fetchProfileData = async () => {
@@ -97,9 +100,48 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto p-4">
-      <div className="bg-background border border-medium-gray rounded-lg p-6 mb-8">
-        <h1 className="text-2xl font-bold text-foreground mb-6">Profile</h1>
-        {profile && (
+      <h1 className="text-3xl font-bold text-foreground mb-6">My Account</h1>
+      
+      {/* Tab Navigation */}
+      <div className="mb-6 border-b border-medium-gray">
+        <div className="flex space-x-4">
+          <button
+            onClick={() => setActiveTab("profile")}
+            className={`py-2 px-4 ${
+              activeTab === "profile"
+                ? "border-b-2 border-primary font-semibold"
+                : "text-dark-gray"
+            }`}
+          >
+            Profile
+          </button>
+          <button
+            onClick={() => setActiveTab("addresses")}
+            className={`py-2 px-4 ${
+              activeTab === "addresses"
+                ? "border-b-2 border-primary font-semibold"
+                : "text-dark-gray"
+            }`}
+          >
+            Addresses
+          </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`py-2 px-4 ${
+              activeTab === "orders"
+                ? "border-b-2 border-primary font-semibold"
+                : "text-dark-gray"
+            }`}
+          >
+            Orders
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Tab */}
+      {activeTab === "profile" && profile && (
+        <div className="bg-background border border-medium-gray rounded-lg p-6 mb-8">
+          <h2 className="text-xl font-bold text-foreground mb-6">Profile</h2>
           <div className="space-y-4">
             <div>
               <label className="text-dark-gray">Username</label>
@@ -115,6 +157,14 @@ export default function ProfilePage() {
                 {new Date(profile.date_joined || "").toLocaleDateString()}
               </p>
             </div>
+            {profile.main_address && (
+              <div>
+                <label className="text-dark-gray">Main Address</label>
+                <p className="text-foreground font-medium">
+                  {profile.main_address.street_address}, {profile.main_address.city}, {profile.main_address.state} {profile.main_address.postal_code}, {profile.main_address.country}
+                </p>
+              </div>
+            )}
             <button
               onClick={handleLogout}
               className="bg-error text-background px-4 py-2 rounded hover:bg-opacity-90"
@@ -122,62 +172,68 @@ export default function ProfilePage() {
               Logout
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <div className="bg-background border border-medium-gray rounded-lg p-6">
-        <h2 className="text-xl font-bold text-foreground mb-4">
-          Order History
-        </h2>
-        {!orders || orders.length === 0 ? (
-          <p className="text-dark-gray">No orders found</p>
-        ) : (
-          <div className="space-y-4">
-            {orders.map((order) => (
-              <div key={order.id} className="border-b border-medium-gray pb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-foreground font-medium">
-                    Order #{order.id}
-                  </span>
-                  <span
-                    className={`px-2 py-1 rounded text-sm ${
-                      order.status === "DELIVERED"
-                        ? "bg-success text-background"
-                        : order.status === "PROCESSING"
-                          ? "bg-warning text-background"
-                          : "bg-error text-background"
-                    }`}
-                  >
-                    {order.status}
-                  </span>
+      {/* Addresses Tab */}
+      {activeTab === "addresses" && <AddressesSection profile={profile} />}
+
+      {/* Orders Tab */}
+      {activeTab === "orders" && (
+        <div className="bg-background border border-medium-gray rounded-lg p-6">
+          <h2 className="text-xl font-bold text-foreground mb-4">
+            Order History
+          </h2>
+          {!orders || orders.length === 0 ? (
+            <p className="text-dark-gray">No orders found</p>
+          ) : (
+            <div className="space-y-4">
+              {orders.map((order) => (
+                <div key={order.id} className="border-b border-medium-gray pb-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-foreground font-medium">
+                      Order #{order.id}
+                    </span>
+                    <span
+                      className={`px-2 py-1 rounded text-sm ${
+                        order.status === "DELIVERED"
+                          ? "bg-success text-background"
+                          : order.status === "PROCESSING"
+                            ? "bg-warning text-background"
+                            : "bg-error text-background"
+                      }`}
+                    >
+                      {order.status}
+                    </span>
+                  </div>
+                  <div className="text-dark-gray text-sm">
+                    {new Date(order.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="mt-2">
+                    {order.items && Array.isArray(order.items) ? (
+                      order.items.map((item, index) => (
+                        <div key={index} className="flex justify-between text-sm">
+                          <span>
+                            {item.product.name} x{item.quantity}
+                          </span>
+                          <span>
+                            ${(item.product.price * item.quantity).toFixed(2)}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm">No items found</div>
+                    )}
+                  </div>
+                  <div className="mt-2 text-right font-bold">
+                    Total: ${(order.total || 0).toFixed(2)}
+                  </div>
                 </div>
-                <div className="text-dark-gray text-sm">
-                  {new Date(order.created_at).toLocaleDateString()}
-                </div>
-                <div className="mt-2">
-                  {order.items && Array.isArray(order.items) ? (
-                    order.items.map((item, index) => (
-                      <div key={index} className="flex justify-between text-sm">
-                        <span>
-                          {item.product.name} x{item.quantity}
-                        </span>
-                        <span>
-                          ${(item.product.price * item.quantity).toFixed(2)}
-                        </span>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-sm">No items found</div>
-                  )}
-                </div>
-                <div className="mt-2 text-right font-bold">
-                  Total: ${(order.total || 0).toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
