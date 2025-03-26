@@ -1,4 +1,6 @@
-// Main address doesn't show up on profile page
+// Main address doesn't show up on profile page it shows after main address is changed
+// If new address is added with main address ticked the main address on profile page doesnt change
+// When main address gets deleted and another one is picked, the main address on profile page and addresses section are different
 "use client";
 
 import { useState, useEffect } from "react";
@@ -34,6 +36,9 @@ export default function ProfilePage() {
       try {
         // Fetch user profile
         const profile = await authApi.getUserDetails();
+        console.log("Fetched profile data:", profile); // Log profile data to see if main_address is there
+        // Add more detailed logging of main address
+        console.log("Main Address:", profile.main_address);
         setProfile(profile);
 
         // Fetch order history
@@ -157,12 +162,21 @@ export default function ProfilePage() {
                 {new Date(profile.date_joined || "").toLocaleDateString()}
               </p>
             </div>
-            {profile.main_address && (
+            {profile && profile.main_address ? (
               <div>
                 <label className="text-dark-gray">Main Address</label>
                 <p className="text-foreground font-medium">
-                  {profile.main_address.street_address}, {profile.main_address.city}, {profile.main_address.state} {profile.main_address.postal_code}, {profile.main_address.country}
+                  {profile.main_address.name}: 
+                  {profile.main_address.street_address}, 
+                  {profile.main_address.city}, 
+                  {profile.main_address.state} {profile.main_address.postal_code}, 
+                  {profile.main_address.country}
                 </p>
+              </div>
+            ) : (
+              <div>
+                <label className="text-dark-gray">Main Address</label>
+                <p className="text-foreground font-medium">No main address set</p>
               </div>
             )}
             <button

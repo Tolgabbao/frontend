@@ -1,4 +1,3 @@
-// When main address changed or address deleted functions works but gives error message
 // When editing main address if set main address gets unticked then there is no main address
 "use client";
 
@@ -120,61 +119,74 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-  
-    try {
-      const csrfToken = getCSRFToken();
-      let response;
-  
-      if (formData.is_main) {
-        // Ensure only one main address exists
-        setAddresses(addresses.map(addr => ({ ...addr, is_main: false })));
-      }
-  
-      if (editingAddressId) {
-        response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        });
-      } else {
-        response = await fetch("http://localhost:8000/addresses/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
-          },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        });
-      }
-  
-      const responseData = await response.json();
-  
-      if (response.ok) {
-        setAddresses(prev =>
-          editingAddressId
-            ? prev.map(addr => (addr.id === editingAddressId ? responseData : addr))
-            : [...prev, responseData]
-        );
-        setShowForm(false);
-        resetForm();
-      } else {
-        throw new Error(responseData?.detail || "Failed to save address");
-      }
-    } catch (error) {
-      console.error("Error saving address:", error);
-      setError(error.message);
-    } finally {
-      setLoading(false);
+  e.preventDefault();
+  setLoading(true);
+  setError("");
+
+  try {
+    const csrfToken = getCSRFToken();
+    let response;
+
+    // If setting as main, first unset all other main addresses
+    if (formData.is_main) {
+      const updatedAddressesBeforeSave = addresses.map(addr => ({ 
+        ...addr, 
+        is_main: false 
+      }));
+      setAddresses(updatedAddressesBeforeSave);
     }
-  };
+
+    if (editingAddressId) {
+      response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+    } else {
+      response = await fetch("http://localhost:8000/addresses/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: "include",
+        body: JSON.stringify(formData),
+      });
+    }
+
+    const responseData = await response.json();
+
+    if (response.ok) {
+      // Update addresses state
+      const updatedAddresses = editingAddressId
+        ? addresses.map(addr => 
+            addr.id === editingAddressId 
+              ? { ...responseData, is_main: formData.is_main }
+              : { ...addr, is_main: false }
+          )
+        : [...addresses, { ...responseData, is_main: formData.is_main }];
+
+      setAddresses(updatedAddresses);
+      
+      // Update profile's main address
+      updateProfileMainAddress(updatedAddresses);
+      
+      setShowForm(false);
+      resetForm();
+    } else {
+      throw new Error(responseData?.detail || "Failed to save address");
+    }
+  } catch (error) {
+    console.error("Error saving address:", error);
+    setError(error.message);
+  } finally {
+    setLoading(false);
+  }
+};
   
 
   const handleDelete = async (id: number) => {
@@ -268,21 +280,27 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
   };
   
 
-  // Update profile's main address immediately
+  // Update the updateProfileMainAddress method
   const updateProfileMainAddress = (updatedAddresses) => {
     if (profile) {
-      // Ensure updatedAddresses is an array, even if it's a single object
-      if (!Array.isArray(updatedAddresses)) {
-        updatedAddresses = [updatedAddresses]; // Wrap it in an array if it's a single object
-      }
+      // Ensure updatedAddresses is an array
+      const addressArray = Array.isArray(updatedAddresses) 
+        ? updatedAddresses 
+        : [updatedAddresses];
       
-      // Now that we know updatedAddresses is an array, find the main address
-      const mainAddress = updatedAddresses.find(addr => addr.is_main) || null;
+      // Find the main address
+      const mainAddress = addressArray.find(addr => addr.is_main) || null;
       
-      // Update the profile with the main address
-      setProfile({ ...profile, main_address: mainAddress });
+      // Create a new profile object with the updated main address
+      const updatedProfile = { 
+        ...profile, 
+        main_address: mainAddress 
+      };
       
-      console.log("Updated addresses: ", updatedAddresses);
+      // Update the profile state
+      setProfile(updatedProfile);
+      
+      console.log("Updated profile with main address:", updatedProfile);
     }
   };
   
