@@ -1,3 +1,4 @@
+// When main address changed or address deleted functions works but gives error message
 // When editing main address if set main address gets unticked then there is no main address
 "use client";
 
@@ -16,13 +17,8 @@ interface Address {
   is_main: boolean;
 }
 
-interface AddressesSectionProps {
-  profile: UserDetails | null;
-  setProfile: React.Dispatch<React.SetStateAction<UserDetails | null>>; // Add this line
-}
-
 // Component for displaying and managing user addresses
-export default function AddressesSection({ profile, setProfile }: AddressesSectionProps) {
+export default function AddressesSection({ profile }) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +55,6 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
       
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched addresses from backend:", data);
         setAddresses(Array.isArray(data) ? data : []);
       } else {
         throw new Error("Failed to fetch addresses");
@@ -119,74 +114,61 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  setError("");
-
-  try {
-    const csrfToken = getCSRFToken();
-    let response;
-
-    // If setting as main, first unset all other main addresses
-    if (formData.is_main) {
-      const updatedAddressesBeforeSave = addresses.map(addr => ({ 
-        ...addr, 
-        is_main: false 
-      }));
-      setAddresses(updatedAddressesBeforeSave);
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+  
+    try {
+      const csrfToken = getCSRFToken();
+      let response;
+  
+      if (formData.is_main) {
+        // Ensure only one main address exists
+        setAddresses(addresses.map(addr => ({ ...addr, is_main: false })));
+      }
+  
+      if (editingAddressId) {
+        response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        });
+      } else {
+        response = await fetch("http://localhost:8000/addresses/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          credentials: "include",
+          body: JSON.stringify(formData),
+        });
+      }
+  
+      const responseData = await response.json();
+  
+      if (response.ok) {
+        setAddresses(prev =>
+          editingAddressId
+            ? prev.map(addr => (addr.id === editingAddressId ? responseData : addr))
+            : [...prev, responseData]
+        );
+        setShowForm(false);
+        resetForm();
+      } else {
+        throw new Error(responseData?.detail || "Failed to save address");
+      }
+    } catch (error) {
+      console.error("Error saving address:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
-
-    if (editingAddressId) {
-      response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-    } else {
-      response = await fetch("http://localhost:8000/addresses/", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        credentials: "include",
-        body: JSON.stringify(formData),
-      });
-    }
-
-    const responseData = await response.json();
-
-    if (response.ok) {
-      // Update addresses state
-      const updatedAddresses = editingAddressId
-        ? addresses.map(addr => 
-            addr.id === editingAddressId 
-              ? { ...responseData, is_main: formData.is_main }
-              : { ...addr, is_main: false }
-          )
-        : [...addresses, { ...responseData, is_main: formData.is_main }];
-
-      setAddresses(updatedAddresses);
-      
-      // Update profile's main address
-      updateProfileMainAddress(updatedAddresses);
-      
-      setShowForm(false);
-      resetForm();
-    } else {
-      throw new Error(responseData?.detail || "Failed to save address");
-    }
-  } catch (error) {
-    console.error("Error saving address:", error);
-    setError(error.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
   
 
   const handleDelete = async (id: number) => {
@@ -208,12 +190,7 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
       });
       
       if (response.ok) {
-          let updatedAddresses = addresses.filter(addr => addr.id !== id);
-
-          // Ensure updatedAddresses is always an array
-          if (!Array.isArray(updatedAddresses)) {
-            updatedAddresses = [];
-          }
+          const updatedAddresses = addresses.filter(addr => addr.id !== id);
         
         // If the deleted address was main, assign the first available address as main
         if (updatedAddresses.length > 0 && updatedAddresses.every(addr => !addr.is_main)) {
@@ -250,15 +227,10 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
       });
   
       if (response.ok) {
-        let updatedAddresses = addresses.map(addr => ({
+        const updatedAddresses = addresses.map(addr => ({
           ...addr,
           is_main: addr.id === id,
         }));
-
-        // Ensure updatedAddresses is always an array
-        if (!Array.isArray(updatedAddresses)) {
-          updatedAddresses = [];
-        }
   
         setAddresses(updatedAddresses);
         
@@ -280,30 +252,13 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
   };
   
 
-  // Update the updateProfileMainAddress method
+  // Update profile's main address immediately
   const updateProfileMainAddress = (updatedAddresses) => {
     if (profile) {
-      // Ensure updatedAddresses is an array
-      const addressArray = Array.isArray(updatedAddresses) 
-        ? updatedAddresses 
-        : [updatedAddresses];
-      
-      // Find the main address
-      const mainAddress = addressArray.find(addr => addr.is_main) || null;
-      
-      // Create a new profile object with the updated main address
-      const updatedProfile = { 
-        ...profile, 
-        main_address: mainAddress 
-      };
-      
-      // Update the profile state
-      setProfile(updatedProfile);
-      
-      console.log("Updated profile with main address:", updatedProfile);
+      const mainAddress = updatedAddresses.find(addr => addr.is_main) || null;
+      setProfile({ ...profile, main_address: mainAddress });
     }
   };
-  
 
   if (loading && addresses.length === 0) {
     return (
@@ -322,7 +277,7 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
         <h2 className="text-xl font-bold text-foreground">Addresses</h2>
         <button
           onClick={handleAddNew}
-          className="bg-primary text-background px-4 py-2 rounded hover:bg-opacity-90"
+          className="bg-primary text-background px-4 py-2 rounded hover:bg-primary/90 hover:scale-105 transition-all duration-200"
         >
           Add New Address
         </button>
@@ -335,7 +290,7 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
       )}
 
       {showForm && (
-        <div className="bg-light-gray p-4 rounded-lg mb-6">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 transition-colors">
           <h3 className="text-lg font-semibold mb-4">
             {editingAddressId ? "Edit Address" : "Add New Address"}
           </h3>
@@ -441,13 +396,13 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
                   setShowForm(false);
                   resetForm();
                 }}
-                className="border border-medium-gray px-4 py-2 rounded hover:bg-light-gray"
+                className="border border-medium-gray text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="bg-primary text-background px-4 py-2 rounded hover:bg-opacity-90"
+                className="bg-primary text-white hover:bg-primary/90 hover:scale-105 px-4 py-2 rounded transition-all duration-200"
                 disabled={loading}
               >
                 {loading ? "Saving..." : "Save Address"}

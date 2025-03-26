@@ -116,7 +116,7 @@ export default function ProductListContent() {
             <Button
               asChild
               size="lg"
-              className="bg-background text-primary hover:bg-light-gray"
+              className="bg-primary text-white hover:bg-white hover:text-primary transition-all duration-200 transform hover:scale-105"
             >
               <Link href="/products">Shop Now</Link>
             </Button>
@@ -141,7 +141,7 @@ export default function ProductListContent() {
       {/* Featured products carousel */}
       <section className="mb-16">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Featured Products</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">Featured Products</h2>
           <Button variant="ghost" asChild className="group">
             <Link
               href="/products?ordering=-average_rating"
@@ -161,7 +161,7 @@ export default function ProductListContent() {
                 className="md:basis-1/2 lg:basis-1/3"
               >
                 <Link href={`/products/${product.id}`} className="block h-full">
-                  <Card className="h-full hover:border-primary transition-colors">
+                  <Card className="h-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white hover:scale-105 transition-all duration-200">
                     <CardHeader className="relative h-52 p-0">
                       <div className="w-full h-full relative">
                         {!failedImages[product.id] ? (
@@ -213,7 +213,7 @@ export default function ProductListContent() {
       {/* New Arrivals */}
       <section className="mb-16">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">New Arrivals</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-6">New Arrivals</h2>
           <Button variant="ghost" asChild className="group">
             <Link
               href="/products?ordering=-created_at"
@@ -228,7 +228,7 @@ export default function ProductListContent() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {newArrivals.slice(0, 3).map((product) => (
             <Link key={product.id} href={`/products/${product.id}`}>
-              <Card className="h-full hover:border-primary transition-colors">
+              <Card className="h-full bg-gray-200 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-primary hover:text-white hover:scale-105 transition-all duration-200">
                 <CardHeader className="relative h-52 p-0">
                   <div className="w-full h-full relative">
                     {!failedImages[product.id] ? (
@@ -273,7 +273,7 @@ export default function ProductListContent() {
 
       {/* Categories */}
       <section className="mb-16">
-        <h2 className="text-2xl font-bold mb-6">Shop by Category</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6">Shop by Category</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((category) => (
             <Link
@@ -281,7 +281,7 @@ export default function ProductListContent() {
               href={`/products?category=${category.id}`}
               className="group block"
             >
-              <div className="bg-light-gray rounded-lg p-6 text-center transition-all group-hover:bg-primary group-hover:text-background">
+              <div className="bg-gray-200 dark:bg-gray-800 rounded-lg p-6 text-center transition-all duration-200 group-hover:bg-primary group-hover:text-white hover:scale-105">
                 <ShoppingBag className="w-8 h-8 mx-auto mb-3" />
                 <h3 className="font-semibold">{category.name}</h3>
               </div>
@@ -325,7 +325,7 @@ export default function ProductListContent() {
       </section>
 
       {/* Newsletter */}
-      <section className="bg-light-gray rounded-lg p-8 mb-12">
+      <section className="bg-gradient-to-r from-[#8b5cf6]/30 to-[#1e1b4b]/30 rounded-lg p-8 mb-12">
         <div className="max-w-2xl mx-auto text-center">
           <h2 className="text-2xl font-bold mb-2">
             Subscribe to Our Newsletter
@@ -340,7 +340,7 @@ export default function ProductListContent() {
               className="flex-grow rounded-md border border-medium-gray px-4 py-2"
               required
             />
-            <Button type="submit" className="whitespace-nowrap">
+            <Button type="submit" className="w-full bg-primary text-white hover:bg-white hover:text-primary transition-colors">
               Subscribe
             </Button>
           </form>

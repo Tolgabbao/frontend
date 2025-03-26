@@ -91,7 +91,7 @@ export default function ProductsAdminPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Product Management</h1>
-        <Button asChild>
+        <Button className="bg-purple-600 text-white hover:bg-purple-700 dark:hover:bg-purple-500 hover:scale-105 transition-all duration-200" asChild>
           <Link href="/admin/products/new">
             <Plus className="mr-2 h-4 w-4" />
             Add New Product

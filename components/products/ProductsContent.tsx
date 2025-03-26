@@ -226,7 +226,7 @@ export default function ProductsContent() {
               </CardContent>
               <CardFooter>
                 <Button
-                  className="w-full"
+                  className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
                   onClick={(e) => {
                     e.preventDefault();
                     handleAddToCart(product.id);
