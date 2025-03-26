@@ -17,8 +17,13 @@ interface Address {
   is_main: boolean;
 }
 
+interface AddressesSectionProps {
+  profile: UserDetails | null;
+  setProfile: React.Dispatch<React.SetStateAction<UserDetails | null>>; // Add this line
+}
+
 // Component for displaying and managing user addresses
-export default function AddressesSection({ profile }) {
+export default function AddressesSection({ profile, setProfile }: AddressesSectionProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -55,6 +60,7 @@ export default function AddressesSection({ profile }) {
       
       if (response.ok) {
         const data = await response.json();
+        console.log("Fetched addresses from backend:", data);
         setAddresses(Array.isArray(data) ? data : []);
       } else {
         throw new Error("Failed to fetch addresses");
@@ -190,7 +196,12 @@ export default function AddressesSection({ profile }) {
       });
       
       if (response.ok) {
-          const updatedAddresses = addresses.filter(addr => addr.id !== id);
+          let updatedAddresses = addresses.filter(addr => addr.id !== id);
+
+          // Ensure updatedAddresses is always an array
+          if (!Array.isArray(updatedAddresses)) {
+            updatedAddresses = [];
+          }
         
         // If the deleted address was main, assign the first available address as main
         if (updatedAddresses.length > 0 && updatedAddresses.every(addr => !addr.is_main)) {
@@ -227,10 +238,15 @@ export default function AddressesSection({ profile }) {
       });
   
       if (response.ok) {
-        const updatedAddresses = addresses.map(addr => ({
+        let updatedAddresses = addresses.map(addr => ({
           ...addr,
           is_main: addr.id === id,
         }));
+
+        // Ensure updatedAddresses is always an array
+        if (!Array.isArray(updatedAddresses)) {
+          updatedAddresses = [];
+        }
   
         setAddresses(updatedAddresses);
         
@@ -255,10 +271,21 @@ export default function AddressesSection({ profile }) {
   // Update profile's main address immediately
   const updateProfileMainAddress = (updatedAddresses) => {
     if (profile) {
+      // Ensure updatedAddresses is an array, even if it's a single object
+      if (!Array.isArray(updatedAddresses)) {
+        updatedAddresses = [updatedAddresses]; // Wrap it in an array if it's a single object
+      }
+      
+      // Now that we know updatedAddresses is an array, find the main address
       const mainAddress = updatedAddresses.find(addr => addr.is_main) || null;
+      
+      // Update the profile with the main address
       setProfile({ ...profile, main_address: mainAddress });
+      
+      console.log("Updated addresses: ", updatedAddresses);
     }
   };
+  
 
   if (loading && addresses.length === 0) {
     return (

@@ -176,7 +176,7 @@ export default function ProfilePage() {
       )}
 
       {/* Addresses Tab */}
-      {activeTab === "addresses" && <AddressesSection profile={profile} />}
+      {activeTab === "addresses" && <AddressesSection profile={profile} setProfile={setProfile}/>}
 
       {/* Orders Tab */}
       {activeTab === "orders" && (
