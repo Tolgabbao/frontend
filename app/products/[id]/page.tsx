@@ -217,7 +217,7 @@ export default function ProductDetailPage() {
         {product.stock_quantity > 0 && (
           <Button
             size="lg"
-            className="w-full md:w-auto"
+            className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
             onClick={handleAddToCart}
           >
             <ShoppingCart className="mr-2 h-5 w-5" />

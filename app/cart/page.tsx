@@ -96,7 +96,7 @@ export default function CartPage() {
             <p className="text-muted-foreground mb-6">
               Start shopping to add items to your cart
             </p>
-            <Button asChild>
+            <Button className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200" asChild>
               <Link href="/products">
                 Explore Products
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -208,7 +208,7 @@ export default function CartPage() {
               <Button variant="outline" asChild>
                 <Link href="/products">Continue Shopping</Link>
               </Button>
-              <Button>
+              <Button className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200" asChild>
                 <Link href="/checkout">Checkout</Link>
               </Button>
             </CardFooter>

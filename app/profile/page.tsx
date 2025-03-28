@@ -1,78 +1,38 @@
-// Main address doesn't show up on profile page it shows after main address is changed
-// If new address is added with main address ticked the main address on profile page doesnt change
-// When main address gets deleted and another one is picked, the main address on profile page and addresses section are different
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { authApi } from "@/api/auth";
-import { UserDetails } from "@/contexts/AuthContext";
-import AddressesSection from "../../components/AddressesSection"; // Import the new component
-
-interface Order {
-  id: number;
-  created_at: string;
-  status: string;
-  total: number;
-  items: {
-    product: {
-      name: string;
-      price: number;
-    };
-    quantity: number;
-  }[];
-}
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { authApi } from '@/api/auth';
+import { UserDetails } from '@/contexts/AuthContext';
+import AddressesSection from '../../components/AddressesSection'; // Import the new component
+import { orderApi, Order } from '@/api/order';
 
 export default function ProfilePage() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserDetails | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("profile"); // Added for tab navigation
+  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('profile'); // Added for tab navigation
 
   useEffect(() => {
     const fetchProfileData = async () => {
       try {
         // Fetch user profile
         const profile = await authApi.getUserDetails();
-        console.log("Fetched profile data:", profile); // Log profile data to see if main_address is there
-        // Add more detailed logging of main address
-        console.log("Main Address:", profile.main_address);
         setProfile(profile);
 
-        // Fetch order history
-        const ordersResponse = await fetch(
-          "http://localhost:8000/api/orders/",
-          {
-            credentials: "include",
-          },
-        );
-        if (ordersResponse.ok) {
-          const ordersData = await ordersResponse.json();
-
-          // Make sure ordersData is an array
-          if (Array.isArray(ordersData)) {
-            setOrders(ordersData);
-          } else if (
-            ordersData &&
-            ordersData.results &&
-            Array.isArray(ordersData.results)
-          ) {
-            // If API returns paginated results
-            setOrders(ordersData.results);
-          } else if (ordersData && typeof ordersData === "object") {
-            // If API returns a single order as object
-            setOrders([ordersData]);
-          } else {
-            console.error("Invalid orders data format:", ordersData);
-            setOrders([]);
-          }
+        // Fetch order history using the orderApi
+        try {
+          const ordersData = await orderApi.getOrders();
+          setOrders(ordersData);
+        } catch (orderError) {
+          console.error('Failed to fetch orders:', orderError);
         }
       } catch (error) {
-        setError("Please log in to view your profile");
-        console.error("Failed to fetch profile data:", error);
-        router.push("/login");
+        setError('Please log in to view your profile');
+        console.error('Failed to fetch profile data:', error);
+        router.push('/login');
       } finally {
         setLoading(false);
       }
@@ -84,10 +44,10 @@ export default function ProfilePage() {
   const handleLogout = async () => {
     try {
       await authApi.logout();
-      router.push("/login");
+      router.push('/login');
     } catch (error) {
-      console.error("Failed to logout", error);
-      setError("Failed to logout");
+      console.error('Failed to logout', error);
+      setError('Failed to logout');
     }
   };
 
@@ -106,36 +66,32 @@ export default function ProfilePage() {
   return (
     <div className="max-w-4xl mx-auto p-4">
       <h1 className="text-3xl font-bold text-foreground mb-6">My Account</h1>
-      
+
       {/* Tab Navigation */}
       <div className="mb-6 border-b border-medium-gray">
         <div className="flex space-x-4">
           <button
-            onClick={() => setActiveTab("profile")}
+            onClick={() => setActiveTab('profile')}
             className={`py-2 px-4 ${
-              activeTab === "profile"
-                ? "border-b-2 border-primary font-semibold"
-                : "text-dark-gray"
+              activeTab === 'profile' ? 'border-b-2 border-primary font-semibold' : 'text-dark-gray'
             }`}
           >
             Profile
           </button>
           <button
-            onClick={() => setActiveTab("addresses")}
+            onClick={() => setActiveTab('addresses')}
             className={`py-2 px-4 ${
-              activeTab === "addresses"
-                ? "border-b-2 border-primary font-semibold"
-                : "text-dark-gray"
+              activeTab === 'addresses'
+                ? 'border-b-2 border-primary font-semibold'
+                : 'text-dark-gray'
             }`}
           >
             Addresses
           </button>
           <button
-            onClick={() => setActiveTab("orders")}
+            onClick={() => setActiveTab('orders')}
             className={`py-2 px-4 ${
-              activeTab === "orders"
-                ? "border-b-2 border-primary font-semibold"
-                : "text-dark-gray"
+              activeTab === 'orders' ? 'border-b-2 border-primary font-semibold' : 'text-dark-gray'
             }`}
           >
             Orders
@@ -144,7 +100,7 @@ export default function ProfilePage() {
       </div>
 
       {/* Profile Tab */}
-      {activeTab === "profile" && profile && (
+      {activeTab === 'profile' && profile && (
         <div className="bg-background border border-medium-gray rounded-lg p-6 mb-8">
           <h2 className="text-xl font-bold text-foreground mb-6">Profile</h2>
           <div className="space-y-4">
@@ -159,29 +115,22 @@ export default function ProfilePage() {
             <div>
               <label className="text-dark-gray">Member Since</label>
               <p className="text-foreground font-medium">
-                {new Date(profile.date_joined || "").toLocaleDateString()}
+                {new Date(profile.date_joined || '').toLocaleDateString()}
               </p>
             </div>
-            {profile && profile.main_address ? (
+            {profile.main_address && (
               <div>
                 <label className="text-dark-gray">Main Address</label>
                 <p className="text-foreground font-medium">
-                  {profile.main_address.name}: 
-                  {profile.main_address.street_address}, 
-                  {profile.main_address.city}, 
-                  {profile.main_address.state} {profile.main_address.postal_code}, 
+                  {profile.main_address.street_address}, {profile.main_address.city},{' '}
+                  {profile.main_address.state} {profile.main_address.postal_code},{' '}
                   {profile.main_address.country}
                 </p>
-              </div>
-            ) : (
-              <div>
-                <label className="text-dark-gray">Main Address</label>
-                <p className="text-foreground font-medium">No main address set</p>
               </div>
             )}
             <button
               onClick={handleLogout}
-              className="bg-error text-background px-4 py-2 rounded hover:bg-opacity-90"
+              className="bg-error text-white px-4 py-2 rounded hover:bg-white hover:text-error border border-error transition-colors"
             >
               Logout
             </button>
@@ -190,57 +139,68 @@ export default function ProfilePage() {
       )}
 
       {/* Addresses Tab */}
-      {activeTab === "addresses" && <AddressesSection profile={profile} setProfile={setProfile}/>}
+      {activeTab === 'addresses' && <AddressesSection profile={profile} />}
 
       {/* Orders Tab */}
-      {activeTab === "orders" && (
+      {activeTab === 'orders' && (
         <div className="bg-background border border-medium-gray rounded-lg p-6">
-          <h2 className="text-xl font-bold text-foreground mb-4">
-            Order History
-          </h2>
+          <h2 className="text-xl font-bold text-foreground mb-4">Order History</h2>
           {!orders || orders.length === 0 ? (
             <p className="text-dark-gray">No orders found</p>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
-                <div key={order.id} className="border-b border-medium-gray pb-4">
+                <div key={order.id} className="border-b border-medium-gray pb-4 last:border-b-0">
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-foreground font-medium">
-                      Order #{order.id}
-                    </span>
+                    <span className="text-foreground font-medium">Order #{order.id}</span>
                     <span
                       className={`px-2 py-1 rounded text-sm ${
-                        order.status === "DELIVERED"
-                          ? "bg-success text-background"
-                          : order.status === "PROCESSING"
-                            ? "bg-warning text-background"
-                            : "bg-error text-background"
+                        order.status === 'DELIVERED'
+                          ? 'bg-success text-background'
+                          : order.status === 'PROCESSING'
+                            ? 'bg-warning text-background'
+                            : order.status === 'CANCELLED'
+                              ? 'bg-error text-background'
+                              : 'bg-secondary text-background' // For IN_TRANSIT or other statuses
                       }`}
                     >
                       {order.status}
                     </span>
                   </div>
-                  <div className="text-dark-gray text-sm">
+                  <div className="text-dark-gray text-sm mb-2">
                     {new Date(order.created_at).toLocaleDateString()}
                   </div>
-                  <div className="mt-2">
-                    {order.items && Array.isArray(order.items) ? (
-                      order.items.map((item, index) => (
-                        <div key={index} className="flex justify-between text-sm">
-                          <span>
-                            {item.product.name} x{item.quantity}
-                          </span>
-                          <span>
-                            ${(item.product.price * item.quantity).toFixed(2)}
-                          </span>
-                        </div>
-                      ))
+
+                  {/* Order items */}
+                  <div className="mt-2 bg-muted p-2 rounded">
+                    {order.items && order.items.length > 0 ? (
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold">Items:</p>
+                        {order.items.map((item) => (
+                          <div key={item.id} className="flex justify-between text-sm">
+                            <span>
+                              {item.product_name} × {item.quantity}
+                            </span>
+                            <span>${(item.price_at_time * item.quantity).toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
-                      <div className="text-sm">No items found</div>
+                      <div className="text-sm italic text-muted-foreground">No items found</div>
                     )}
                   </div>
+
                   <div className="mt-2 text-right font-bold">
-                    Total: ${(order.total || 0).toFixed(2)}
+                    Total: ${Number(order.total_amount).toFixed(2)}
+                  </div>
+
+                  <div className="mt-2 text-right">
+                    <a
+                      href={`/orders/${order.id}`}
+                      className="text-primary hover:underline text-sm"
+                    >
+                      View Order Details →
+                    </a>
                   </div>
                 </div>
               ))}
