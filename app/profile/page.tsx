@@ -118,16 +118,6 @@ export default function ProfilePage() {
                 {new Date(profile.date_joined || '').toLocaleDateString()}
               </p>
             </div>
-            {profile.main_address && (
-              <div>
-                <label className="text-dark-gray">Main Address</label>
-                <p className="text-foreground font-medium">
-                  {profile.main_address.street_address}, {profile.main_address.city},{' '}
-                  {profile.main_address.state} {profile.main_address.postal_code},{' '}
-                  {profile.main_address.country}
-                </p>
-              </div>
-            )}
             <button
               onClick={handleLogout}
               className="bg-error text-white px-4 py-2 rounded hover:bg-white hover:text-error border border-error transition-colors"

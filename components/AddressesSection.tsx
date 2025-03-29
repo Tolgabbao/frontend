@@ -1,5 +1,3 @@
-// When main address changed or address deleted functions works but gives error message
-// When editing main address if set main address gets unticked then there is no main address
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,8 +15,13 @@ interface Address {
   is_main: boolean;
 }
 
+interface AddressesSectionProps {
+  profile: UserDetails | null;
+  setProfile: React.Dispatch<React.SetStateAction<UserDetails | null>>; // Add this line
+}
+
 // Component for displaying and managing user addresses
-export default function AddressesSection({ profile }) {
+export default function AddressesSection({ profile, setProfile }: AddressesSectionProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -39,7 +42,14 @@ export default function AddressesSection({ profile }) {
   useEffect(() => {
     // If profile is loaded and has addresses, use them
     if (profile && profile.addresses) {
-      setAddresses(profile.addresses);
+      // Sort addresses - main address first
+      const sortedAddresses = [...profile.addresses].sort((a, b) => {
+        if (a.is_main && !b.is_main) return -1;
+        if (!a.is_main && b.is_main) return 1;
+        return 0;
+      });
+      
+      setAddresses(sortedAddresses);
       setLoading(false);
     } else {
       // Otherwise fetch addresses separately
@@ -55,7 +65,17 @@ export default function AddressesSection({ profile }) {
       
       if (response.ok) {
         const data = await response.json();
-        setAddresses(Array.isArray(data) ? data : []);
+        console.log("Fetched addresses from backend:", data);
+        // Sort addresses - main address first
+        const sortedAddresses = Array.isArray(data) 
+        ? [...data].sort((a, b) => {
+            if (a.is_main && !b.is_main) return -1;
+            if (!a.is_main && b.is_main) return 1;
+            return 0;
+          })
+        : [];
+        
+        setAddresses(sortedAddresses);
       } else {
         throw new Error("Failed to fetch addresses");
       }
@@ -122,11 +142,6 @@ export default function AddressesSection({ profile }) {
       const csrfToken = getCSRFToken();
       let response;
   
-      if (formData.is_main) {
-        // Ensure only one main address exists
-        setAddresses(addresses.map(addr => ({ ...addr, is_main: false })));
-      }
-  
       if (editingAddressId) {
         response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
           method: "PUT",
@@ -152,11 +167,83 @@ export default function AddressesSection({ profile }) {
       const responseData = await response.json();
   
       if (response.ok) {
-        setAddresses(prev =>
-          editingAddressId
-            ? prev.map(addr => (addr.id === editingAddressId ? responseData : addr))
-            : [...prev, responseData]
-        );
+        // Update addresses state with proper main address handling
+        let updatedAddresses;
+        
+        if (formData.is_main) {
+          // If setting as main, update all other addresses to not be main
+          if (editingAddressId) {
+            updatedAddresses = addresses.map(addr => ({
+              ...addr,
+              is_main: addr.id === editingAddressId
+            }));
+          } else {
+            // For new address being set as main
+            updatedAddresses = addresses.map(addr => ({
+              ...addr,
+              is_main: false
+            }));
+            updatedAddresses.push({
+              ...responseData,
+              is_main: true
+            });
+          }
+        } else {
+          // Not setting as main
+          if (editingAddressId) {
+            // Check if we're unchecking the current main
+            const currentAddress = addresses.find(addr => addr.id === editingAddressId);
+            if (currentAddress?.is_main && !formData.is_main) {
+              // Find another address to set as main
+              const otherAddress = addresses.find(addr => addr.id !== editingAddressId);
+              if (otherAddress) {
+                updatedAddresses = addresses.map(addr => ({
+                  ...addr,
+                  is_main: addr.id === otherAddress.id
+                }));
+                
+                // Call API to set the other address as main
+                await fetch(`http://localhost:8000/addresses/${otherAddress.id}/set-main/`, {
+                  method: "PUT",
+                  credentials: "include",
+                  headers: {
+                    "X-CSRFToken": csrfToken,
+                  },
+                });
+              } else {
+                // No other address, keep this one as main
+                updatedAddresses = addresses.map(addr => ({
+                  ...addr,
+                  is_main: addr.id === editingAddressId
+                }));
+              }
+            } else {
+              // Not changing main status
+              updatedAddresses = addresses.map(addr => 
+                addr.id === editingAddressId ? { ...responseData } : addr
+              );
+            }
+          } else {
+            // New address, not main
+            updatedAddresses = [...addresses, responseData];
+          }
+        }
+        
+        // Sort addresses - main address first, then by update date
+        updatedAddresses.sort((a, b) => {
+          if (a.is_main && !b.is_main) return -1;
+          if (!a.is_main && b.is_main) return 1;
+          return 0;
+        });
+        
+        setAddresses(updatedAddresses);
+        
+        // Update profile's main address
+        const mainAddress = updatedAddresses.find(addr => addr.is_main);
+        if (mainAddress) {
+          //updateProfileMainAddress(mainAddress);
+        }
+        
         setShowForm(false);
         resetForm();
       } else {
@@ -190,7 +277,12 @@ export default function AddressesSection({ profile }) {
       });
       
       if (response.ok) {
-          const updatedAddresses = addresses.filter(addr => addr.id !== id);
+          let updatedAddresses = addresses.filter(addr => addr.id !== id);
+
+          // Ensure updatedAddresses is always an array
+          if (!Array.isArray(updatedAddresses)) {
+            updatedAddresses = [];
+          }
         
         // If the deleted address was main, assign the first available address as main
         if (updatedAddresses.length > 0 && updatedAddresses.every(addr => !addr.is_main)) {
@@ -198,7 +290,7 @@ export default function AddressesSection({ profile }) {
         }
 
         setAddresses(updatedAddresses);
-        updateProfileMainAddress(updatedAddresses);
+        //updateProfileMainAddress(updatedAddresses);
         setError("");
       } else {
         throw new Error("Failed to delete address");
@@ -227,17 +319,29 @@ export default function AddressesSection({ profile }) {
       });
   
       if (response.ok) {
-        const updatedAddresses = addresses.map(addr => ({
+        let updatedAddresses = addresses.map(addr => ({
           ...addr,
           is_main: addr.id === id,
         }));
+
+        // Ensure updatedAddresses is always an array
+        if (!Array.isArray(updatedAddresses)) {
+          updatedAddresses = [];
+        }
+
+        // Sort addresses - main address first, then by update date
+        updatedAddresses.sort((a, b) => {
+          if (a.is_main && !b.is_main) return -1;
+          if (!a.is_main && b.is_main) return 1;
+          return 0;
+        });
   
         setAddresses(updatedAddresses);
         
         // Find the new main address and update profile
         const newMainAddress = updatedAddresses.find(addr => addr.id === id);
         if (newMainAddress) {
-          updateProfileMainAddress(newMainAddress);
+          //updateProfileMainAddress(newMainAddress);
         }
         setError("");
       } else {
@@ -252,13 +356,32 @@ export default function AddressesSection({ profile }) {
   };
   
 
-  // Update profile's main address immediately
+  // Update the updateProfileMainAddress method
+  /*
   const updateProfileMainAddress = (updatedAddresses) => {
     if (profile) {
-      const mainAddress = updatedAddresses.find(addr => addr.is_main) || null;
-      setProfile({ ...profile, main_address: mainAddress });
+      // Ensure updatedAddresses is an array
+      const addressArray = Array.isArray(updatedAddresses) 
+        ? updatedAddresses 
+        : [updatedAddresses];
+      
+      // Find the main address
+      const mainAddress = addressArray.find(addr => addr.is_main) || null;
+      
+      // Create a new profile object with the updated main address
+      const updatedProfile = { 
+        ...profile, 
+        main_address: mainAddress 
+      };
+      
+      // Update the profile state
+      setProfile(updatedProfile);
+      
+      console.log("Updated profile with main address:", updatedProfile);
     }
   };
+  */
+  
 
   if (loading && addresses.length === 0) {
     return (
@@ -277,7 +400,7 @@ export default function AddressesSection({ profile }) {
         <h2 className="text-xl font-bold text-foreground">Addresses</h2>
         <button
           onClick={handleAddNew}
-          className="bg-primary text-background px-4 py-2 rounded hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+          className="bg-primary text-background px-4 py-2 rounded hover:bg-opacity-90"
         >
           Add New Address
         </button>
@@ -290,7 +413,7 @@ export default function AddressesSection({ profile }) {
       )}
 
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg mb-6 transition-colors">
+        <div className="bg-light-gray p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold mb-4">
             {editingAddressId ? "Edit Address" : "Add New Address"}
           </h3>
@@ -396,13 +519,13 @@ export default function AddressesSection({ profile }) {
                   setShowForm(false);
                   resetForm();
                 }}
-                className="border border-medium-gray text-gray-800 dark:text-gray-200 px-4 py-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 hover:scale-105 transition-all duration-200"
+                className="border border-medium-gray px-4 py-2 rounded hover:bg-light-gray"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="bg-primary text-white hover:bg-primary/90 hover:scale-105 px-4 py-2 rounded transition-all duration-200"
+                className="bg-primary text-background px-4 py-2 rounded hover:bg-opacity-90"
                 disabled={loading}
               >
                 {loading ? "Saving..." : "Save Address"}
