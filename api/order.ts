@@ -16,10 +16,17 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface PaymentInfo {
+  card_last_four: string;
+  card_holder: string;
+  expiry_date: string; // Format: MM/YY
+}
+
 export interface OrderRequest {
   shipping_address: string;
   items: OrderItem[];
   total_amount: number;
+  payment_info: PaymentInfo;
 }
 
 export interface Order {
