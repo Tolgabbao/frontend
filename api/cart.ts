@@ -23,6 +23,11 @@ export interface CartItem {
   quantity: number;
 }
 
+// Custom error interface for API errors
+interface ApiErrorResponse extends Error {
+  response: Response;
+}
+
 export const cartApi = {
   getCart: async (): Promise<CartResponse> => {
     const response = await fetch(`${BASE_URL}/api/carts/items`, {
@@ -42,7 +47,14 @@ export const cartApi = {
       body: JSON.stringify({ product_id: productId, quantity }),
       credentials: 'include',
     });
-    if (!response.ok) throw new Error('Failed to add to cart');
+
+    if (!response.ok) {
+      // Create a properly typed error object
+      const error = new Error('Failed to add to cart') as ApiErrorResponse;
+      error.response = response;
+      throw error;
+    }
+
     return response.json();
   },
 
@@ -56,18 +68,36 @@ export const cartApi = {
       body: JSON.stringify({ product_id, quantity }),
       credentials: 'include',
     });
-    if (!response.ok) throw new Error('Failed to update quantity');
+
+    if (!response.ok) {
+      // Create a properly typed error object
+      const error = new Error('Failed to update quantity') as ApiErrorResponse;
+      error.response = response;
+      throw error;
+    }
+
+    return response.json();
   },
 
-  removeItem: async (itemId: number) => {
-    const response = await fetch(`${BASE_URL}/api/carts/${itemId}/`, {
-      method: 'DELETE',
+  removeItem: async (productId: number) => {
+    const response = await fetch(`${BASE_URL}/api/carts/remove/`, {
+      method: 'POST',
       headers: {
+        'Content-Type': 'application/json',
         'X-CSRFToken': getCSRFToken() || '',
       },
+      body: JSON.stringify({ product_id: productId }),
       credentials: 'include',
     });
-    if (!response.ok) throw new Error('Failed to remove item');
+
+    if (!response.ok) {
+      // Create a properly typed error object
+      const error = new Error('Failed to remove item') as ApiErrorResponse;
+      error.response = response;
+      throw error;
+    }
+
+    return response.json();
   },
 
   clearCart: async () => {
