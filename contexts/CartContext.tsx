@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { CartResponse, cartApi } from "@/api/cart";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { CartResponse, cartApi } from '@/api/cart';
+import { toast } from 'sonner';
+
+// Define the ApiErrorResponse interface here too for proper typing
+interface ApiErrorResponse extends Error {
+  response: Response;
+}
 
 interface CartContextType {
   cart: CartResponse | null;
@@ -15,7 +15,7 @@ interface CartContextType {
   isLoading: boolean;
   error: string | null;
   addItem: (productId: number, quantity?: number) => Promise<void>;
-  removeItem: (productId: number) => Promise<void>;
+  removeItem: (itemId: number) => Promise<void>;
   updateQuantity: (productId: number, quantity: number) => Promise<void>;
   refreshCart: () => Promise<void>;
 }
@@ -27,8 +27,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const cartItemCount =
-    cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
+  const cartItemCount = cart?.items?.reduce((total, item) => total + item.quantity, 0) || 0;
 
   const refreshCart = async () => {
     setError(null);
@@ -36,8 +35,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const data = await cartApi.getCart();
       setCart(data);
     } catch (err) {
-      console.error("Error fetching cart:", err);
-      setError("Failed to load cart data");
+      console.error('Error fetching cart:', err);
+      setError('Failed to load cart data');
     } finally {
       setIsLoading(false);
     }
@@ -53,22 +52,74 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const updatedCart = await cartApi.addToCart(productId, quantity);
       setCart(updatedCart);
     } catch (err) {
-      console.error("Error adding item to cart:", err);
-      setError("Failed to add item to cart");
+      console.error('Error adding item to cart:', err);
+
+      // Handle API error responses with proper typing
+      const error = err as ApiErrorResponse;
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (errorData.error) {
+            setError(errorData.error);
+            toast.error(errorData.error);
+            return;
+          }
+        } catch {
+          const message = error.response.statusText || 'Failed to add item to cart';
+          setError(message);
+          toast.error(message);
+          return;
+        }
+      }
+
+      // Default error message
+      setError('Failed to add item to cart');
+      toast.error('Failed to add item to cart');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const removeItem = async (productId: number) => {
+  const removeItem = async (itemId: number) => {
     setIsLoading(true);
+    setError(null);
     try {
-      await cartApi.removeItem(productId);
-      // Refresh the cart after item removal
+      // Find the item in the cart to get its product ID
+      const item = cart?.items.find((item) => item.id === itemId);
+
+      if (!item) {
+        throw new Error('Item not found in cart');
+      }
+
+      // Call the API with the product ID
+      await cartApi.removeItem(item.product);
+
+      // Refresh the cart to get the updated state
       await refreshCart();
     } catch (err) {
-      console.error("Error removing item from cart:", err);
-      setError("Failed to remove item from cart");
+      console.error('Error removing item from cart:', err);
+
+      // Handle API error responses with proper typing
+      const error = err as ApiErrorResponse;
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (errorData.error) {
+            setError(errorData.error);
+            toast.error(errorData.error);
+            return;
+          }
+        } catch {
+          const message = error.response.statusText || 'Failed to remove item';
+          setError(message);
+          toast.error(message);
+          return;
+        }
+      }
+
+      // Default error message
+      setError('Failed to remove item from cart');
+      toast.error('Failed to remove item from cart');
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +133,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       const item = cart?.items.find((item) => item.id === itemId);
 
       if (!item) {
-        throw new Error("Item not found in cart");
+        throw new Error('Item not found in cart');
       }
 
       // Call the API with the product ID and new quantity
@@ -91,9 +142,29 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
       // Refresh the cart to get the updated state
       await refreshCart();
     } catch (err) {
-      console.error("Error updating cart item quantity:", err);
-      setError("Failed to update quantity");
-      throw err;
+      console.error('Error updating cart item quantity:', err);
+
+      // Handle API error responses with proper typing
+      const error = err as ApiErrorResponse;
+      if (error.response) {
+        try {
+          const errorData = await error.response.json();
+          if (errorData.error) {
+            setError(errorData.error);
+            toast.error(errorData.error);
+            return;
+          }
+        } catch {
+          const message = error.response.statusText || 'Failed to update quantity';
+          setError(message);
+          toast.error(message);
+          return;
+        }
+      }
+
+      // Default error message
+      setError('Failed to update quantity');
+      toast.error('Failed to update quantity');
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +191,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 export const useCart = () => {
   const context = useContext(CartContext);
   if (context === undefined) {
-    throw new Error("useCart must be used within a CartProvider");
+    throw new Error('useCart must be used within a CartProvider');
   }
   return context;
 };

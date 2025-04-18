@@ -1,49 +1,43 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { useCart } from "@/contexts/CartContext";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Minus, Plus, Trash2, ShoppingBag, ArrowRight } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useCart } from '@/contexts/CartContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Minus, Plus, Trash2, ShoppingBag, ArrowRight, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function CartPage() {
-  const {
-    cart,
-    isLoading,
-    error: cartError,
-    updateQuantity,
-    removeItem,
-    refreshCart,
-  } = useCart();
-  const [updatingItems, setUpdatingItems] = useState<Record<number, boolean>>(
-    {},
-  );
+  const { cart, isLoading, error: cartError, updateQuantity, removeItem, refreshCart } = useCart();
+  const [updatingItems, setUpdatingItems] = useState<Record<number, boolean>>({});
+  const [itemErrors, setItemErrors] = useState<Record<number, string>>({});
 
   // Get the API base URL for constructing full image URLs - same approach as ProductsContent
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   const handleUpdateQuantity = async (itemId: number, newQuantity: number) => {
     // Don't allow quantity less than 1
     if (newQuantity < 1) return;
+
+    // Clear any previous errors for this item
+    setItemErrors((prev) => ({ ...prev, [itemId]: '' }));
 
     // Set the specific item as updating
     setUpdatingItems((prev) => ({ ...prev, [itemId]: true }));
 
     try {
       await updateQuantity(itemId, newQuantity);
-      toast.success("Quantity updated");
-    } catch (error) {
-      console.error("Error updating quantity:", error);
-      toast.error("Failed to update quantity");
+      // Success toast is shown in the context
+    } catch (error: unknown) {
+      // Error handling is now in the context
+      console.error('Error details:', error);
+
+      // Store any error message for this specific item
+      if (error instanceof Error) {
+        setItemErrors((prev) => ({ ...prev, [itemId]: error.message }));
+      }
     } finally {
       // Clear the updating state for this item
       setUpdatingItems((prev) => ({ ...prev, [itemId]: false }));
@@ -54,10 +48,10 @@ export default function CartPage() {
     setUpdatingItems((prev) => ({ ...prev, [itemId]: true }));
     try {
       await removeItem(itemId);
-      toast.success("Item removed from cart");
+      toast.success('Item removed from cart');
     } catch (error) {
-      console.error("Error removing item:", error);
-      toast.error("Failed to remove item");
+      console.error('Error removing item:', error);
+      toast.error('Failed to remove item');
     } finally {
       setUpdatingItems((prev) => ({ ...prev, [itemId]: false }));
     }
@@ -90,13 +84,12 @@ export default function CartPage() {
         <Card className="text-center py-8 px-4">
           <CardContent className="flex flex-col items-center">
             <ShoppingBag className="h-16 w-16 text-medium-gray mb-4" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              Your cart is empty
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Start shopping to add items to your cart
-            </p>
-            <Button className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200" asChild>
+            <h2 className="text-xl font-semibold text-foreground mb-2">Your cart is empty</h2>
+            <p className="text-muted-foreground mb-6">Start shopping to add items to your cart</p>
+            <Button
+              className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+              asChild
+            >
               <Link href="/products">
                 Explore Products
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -114,74 +107,70 @@ export default function CartPage() {
               {cart.items.map((item) => (
                 <div
                   key={item.id}
-                  className="flex items-center py-4 px-6 border-b border-medium-gray last:border-0"
+                  className="flex flex-col py-4 px-6 border-b border-medium-gray last:border-0"
                 >
-                  <div className="h-16 w-16 relative mr-4 flex-shrink-0 bg-muted rounded-md overflow-hidden">
-                    {/* Using the same approach as ProductsContent for image URLs */}
-                    <Image
-                      src={`${apiBaseUrl}/api/products/${item.product}/image/`}
-                      alt={item.product_name}
-                      fill
-                      sizes="64px"
-                      className="object-cover"
-                      onError={() =>
-                        console.error(
-                          `Failed to load image for product ${item.product}`,
-                        )
-                      }
-                      unoptimized
-                    />
-                  </div>
-                  <div className="flex flex-1 items-center justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">
-                        {item.product_name}
-                      </p>
-                      <p className="text-primary font-bold">
-                        ${item.product_price}
-                      </p>
+                  <div className="flex items-center">
+                    <div className="h-16 w-16 relative mr-4 flex-shrink-0 bg-muted rounded-md overflow-hidden">
+                      {/* Using the same approach as ProductsContent for image URLs */}
+                      <Image
+                        src={`${apiBaseUrl}/api/products/${item.product}/image/`}
+                        alt={item.product_name}
+                        fill
+                        sizes="64px"
+                        className="object-cover"
+                        onError={() =>
+                          console.error(`Failed to load image for product ${item.product}`)
+                        }
+                        unoptimized
+                      />
                     </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-2">
+                    <div className="flex flex-1 items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground">{item.product_name}</p>
+                        <p className="text-primary font-bold">${item.product_price}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                            disabled={updatingItems[item.id] || item.quantity <= 1}
+                          >
+                            <Minus className="h-4 w-4" />
+                          </Button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                            disabled={updatingItems[item.id]}
+                          >
+                            <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            handleUpdateQuantity(item.id, item.quantity - 1)
-                          }
-                          disabled={
-                            updatingItems[item.id] || item.quantity <= 1
-                          }
-                        >
-                          <Minus className="h-4 w-4" />
-                        </Button>
-                        <span className="w-8 text-center font-medium">
-                          {item.quantity}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() =>
-                            handleUpdateQuantity(item.id, item.quantity + 1)
-                          }
+                          className="text-error hover:text-error hover:bg-error/10"
+                          onClick={() => handleRemoveItem(item.id)}
                           disabled={updatingItems[item.id]}
                         >
-                          <Plus className="h-4 w-4" />
+                          <Trash2 className="h-5 w-5" />
                         </Button>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-error hover:text-error hover:bg-error/10"
-                        onClick={() => handleRemoveItem(item.id)}
-                        disabled={updatingItems[item.id]}
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </Button>
                     </div>
                   </div>
+
+                  {/* Display item-specific error message if present */}
+                  {itemErrors[item.id] && (
+                    <div className="mt-2 text-error text-sm flex items-center">
+                      <AlertCircle className="h-4 w-4 mr-1" />
+                      {itemErrors[item.id]}
+                    </div>
+                  )}
                 </div>
               ))}
             </CardContent>
@@ -208,7 +197,10 @@ export default function CartPage() {
               <Button variant="outline" asChild>
                 <Link href="/products">Continue Shopping</Link>
               </Button>
-              <Button className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200" asChild>
+              <Button
+                className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+                asChild
+              >
                 <Link href="/checkout">Checkout</Link>
               </Button>
             </CardFooter>

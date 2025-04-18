@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:8000";
+const BASE_URL = 'http://localhost:8000';
 
 export interface Category {
   id: number;
@@ -48,30 +48,28 @@ interface ProductQueryParams {
 function getCookie(name: string): string {
   const value = `; ${document.cookie}`;
   const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(";").shift() || "";
-  return "";
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || '';
+  return '';
 }
 
 export const productsApi = {
   getProducts: async (params: ProductQueryParams = {}): Promise<Product[]> => {
     const queryParams = new URLSearchParams();
 
-    if (params.search) queryParams.append("search", params.search);
-    if (params.category) queryParams.append("category", params.category);
-    if (params.ordering) queryParams.append("ordering", params.ordering);
-    if (params.limit) queryParams.append("limit", params.limit.toString());
-    if (params.offset) queryParams.append("offset", params.offset.toString());
-    if (params.featured) queryParams.append("featured", "true");
+    if (params.search) queryParams.append('search', params.search);
+    if (params.category) queryParams.append('category', params.category);
+    if (params.ordering) queryParams.append('ordering', params.ordering);
+    if (params.limit) queryParams.append('limit', params.limit.toString());
+    if (params.offset) queryParams.append('offset', params.offset.toString());
+    if (params.featured) queryParams.append('featured', 'true');
 
-    const queryString = queryParams.toString()
-      ? `?${queryParams.toString()}`
-      : "";
+    const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
     const response = await fetch(`${BASE_URL}/api/products/${queryString}`, {
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch products");
+      throw new Error('Failed to fetch products');
     }
 
     const data = await response.json();
@@ -83,26 +81,24 @@ export const productsApi = {
     } else if (data.results && Array.isArray(data.results)) {
       // If data has a results property that is an array (pagination response)
       return data.results;
-    } else if (data && typeof data === "object") {
+    } else if (data && typeof data === 'object') {
       // If data is a single object, wrap it in an array
-      console.warn(
-        "API returned a single object instead of an array, converting to array",
-      );
+      console.warn('API returned a single object instead of an array, converting to array');
       return [data];
     } else {
       // If data is in an unexpected format, return an empty array and log an error
-      console.error("Received unexpected data format from API:", data);
+      console.error('Received unexpected data format from API:', data);
       return [];
     }
   },
 
   getProduct: async (id: number): Promise<Product> => {
     const response = await fetch(`${BASE_URL}/api/products/${id}/`, {
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch product");
+      throw new Error('Failed to fetch product');
     }
 
     return response.json();
@@ -110,11 +106,11 @@ export const productsApi = {
 
   getCategories: async (): Promise<Category[]> => {
     const response = await fetch(`${BASE_URL}/api/categories/`, {
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch categories");
+      throw new Error('Failed to fetch categories');
     }
 
     const data = await response.json();
@@ -122,15 +118,12 @@ export const productsApi = {
   },
 
   getTopRatedProducts: async (limit: number = 5): Promise<Product[]> => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/top_rated/?limit=${limit}`,
-      {
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${BASE_URL}/api/products/top_rated/?limit=${limit}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch top rated products");
+      throw new Error('Failed to fetch top rated products');
     }
 
     const data = await response.json();
@@ -139,24 +132,21 @@ export const productsApi = {
       return data;
     } else if (data.results && Array.isArray(data.results)) {
       return data.results;
-    } else if (data && typeof data === "object") {
+    } else if (data && typeof data === 'object') {
       return [data];
     } else {
-      console.error("Received unexpected data format from API:", data);
+      console.error('Received unexpected data format from API:', data);
       return [];
     }
   },
 
   getNewestProducts: async (limit: number = 5): Promise<Product[]> => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/newest/?limit=${limit}`,
-      {
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${BASE_URL}/api/products/newest/?limit=${limit}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch newest products");
+      throw new Error('Failed to fetch newest products');
     }
 
     const data = await response.json();
@@ -165,24 +155,21 @@ export const productsApi = {
       return data;
     } else if (data.results && Array.isArray(data.results)) {
       return data.results;
-    } else if (data && typeof data === "object") {
+    } else if (data && typeof data === 'object') {
       return [data];
     } else {
-      console.error("Received unexpected data format from API:", data);
+      console.error('Received unexpected data format from API:', data);
       return [];
     }
   },
 
   getBestSellingProducts: async (limit: number = 5): Promise<Product[]> => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/best_selling/?limit=${limit}`,
-      {
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${BASE_URL}/api/products/best_selling/?limit=${limit}`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch best selling products");
+      throw new Error('Failed to fetch best selling products');
     }
 
     const data = await response.json();
@@ -191,10 +178,10 @@ export const productsApi = {
       return data;
     } else if (data.results && Array.isArray(data.results)) {
       return data.results;
-    } else if (data && typeof data === "object") {
+    } else if (data && typeof data === 'object') {
       return [data];
     } else {
-      console.error("Received unexpected data format from API:", data);
+      console.error('Received unexpected data format from API:', data);
       return [];
     }
   },
@@ -207,41 +194,63 @@ export const productsApi = {
   },
 
   rateProduct: async (productId: number, rating: number) => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/rate_product/`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rating }),
-        credentials: "include",
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/rate_product/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
       },
-    );
-    if (!response.ok) throw new Error("Failed to rate product");
+      body: JSON.stringify({ rating, product: productId }), // Add product ID to request
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to rate product');
+    }
     return response.json();
   },
 
-  commentProduct: async (productId: number, content: string) => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/comment_product/`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
-        credentials: "include",
+  commentProduct: async (productId: number, comment: string) => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/comment_product/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
       },
-    );
-    if (!response.ok) throw new Error("Failed to add comment");
+      body: JSON.stringify({ comment, product: productId }), // Add product ID to request
+      credentials: 'include',
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to add comment');
+    }
     return response.json();
+  },
+
+  approveComment: async (productId: number, commentId: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/approve_comment/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ comment_id: commentId }),
+      credentials: 'include',
+    });
+    if (!response.ok) throw new Error('Failed to approve comment');
   },
 
   // Admin functions
   getAdminProducts: async (): Promise<Product[]> => {
     const response = await fetch(`${BASE_URL}/api/products/`, {
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch admin products");
+      throw new Error('Failed to fetch admin products');
     }
 
     const data = await response.json();
@@ -250,44 +259,41 @@ export const productsApi = {
       return data;
     } else if (data.results && Array.isArray(data.results)) {
       return data.results;
-    } else if (data && typeof data === "object") {
+    } else if (data && typeof data === 'object') {
       return [data];
     } else {
-      console.error("Received unexpected data format from API:", data);
+      console.error('Received unexpected data format from API:', data);
       return [];
     }
   },
 
   toggleProductVisibility: async (productId: number): Promise<void> => {
-    const csrfToken = getCookie("csrftoken");
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/toggle_visibility/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        credentials: "include",
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/toggle_visibility/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
       },
-    );
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to toggle product visibility");
+      throw new Error('Failed to toggle product visibility');
     }
 
     return response.json();
   },
 
   createProduct: async (formData: FormData): Promise<Product> => {
-    const csrfToken = getCookie("csrftoken");
+    const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/add-product/`, {
-      method: "POST",
+      method: 'POST',
       headers: {
-        "X-CSRFToken": csrfToken,
+        'X-CSRFToken': csrfToken,
       },
       body: formData,
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -299,48 +305,45 @@ export const productsApi = {
   },
 
   updateProduct: async (id: number, formData: FormData): Promise<Product> => {
-    const csrfToken = getCookie("csrftoken");
+    const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${id}/`, {
-      method: "PATCH",
+      method: 'PATCH',
       headers: {
-        "X-CSRFToken": csrfToken,
+        'X-CSRFToken': csrfToken,
       },
       body: formData,
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to update product");
+      throw new Error('Failed to update product');
     }
 
     return response.json();
   },
 
   deleteProduct: async (id: number): Promise<void> => {
-    const csrfToken = getCookie("csrftoken");
+    const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${id}/`, {
-      method: "DELETE",
+      method: 'DELETE',
       headers: {
-        "X-CSRFToken": csrfToken,
+        'X-CSRFToken': csrfToken,
       },
-      credentials: "include",
+      credentials: 'include',
     });
 
     if (!response.ok) {
-      throw new Error("Failed to delete product");
+      throw new Error('Failed to delete product');
     }
   },
 
   getProductImages: async (productId: number): Promise<ProductImage[]> => {
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/images/`,
-      {
-        credentials: "include",
-      },
-    );
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/images/`, {
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to fetch product images");
+      throw new Error('Failed to fetch product images');
     }
 
     return response.json();
@@ -349,136 +352,112 @@ export const productsApi = {
   addProductImage: async (
     productId: number,
     imageData: string,
-    isPrimary: boolean = false,
+    isPrimary: boolean = false
   ): Promise<ProductImage> => {
-    const csrfToken = getCookie("csrftoken");
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/images/`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({
-          image: imageData,
-          is_primary: isPrimary,
-        }),
-        credentials: "include",
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/images/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
       },
-    );
+      body: JSON.stringify({
+        image: imageData,
+        is_primary: isPrimary,
+      }),
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to add product image");
+      throw new Error('Failed to add product image');
     }
 
     return response.json();
   },
 
-  setPrimaryImageById: async (
-    productId: number,
-    imageId: number,
-  ): Promise<void> => {
-    const csrfToken = getCookie("csrftoken");
+  setPrimaryImageById: async (productId: number, imageId: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
     const response = await fetch(
       `${BASE_URL}/api/products/${productId}/images/${imageId}/set_primary/`,
       {
-        method: "POST",
+        method: 'POST',
         headers: {
-          "X-CSRFToken": csrfToken,
+          'X-CSRFToken': csrfToken,
         },
-        credentials: "include",
-      },
+        credentials: 'include',
+      }
     );
 
     if (!response.ok) {
-      throw new Error("Failed to set primary image");
+      throw new Error('Failed to set primary image');
     }
   },
 
-  deleteProductImage: async (
-    productId: number,
-    imageId: number,
-  ): Promise<void> => {
-    const csrfToken = getCookie("csrftoken");
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/images/${imageId}/`,
-      {
-        method: "DELETE",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        credentials: "include",
+  deleteProductImage: async (productId: number, imageId: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/images/${imageId}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': csrfToken,
       },
-    );
+      credentials: 'include',
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to delete product image");
+      throw new Error('Failed to delete product image');
     }
   },
 
-  async uploadProductImage(
-    productId: number,
-    formData: FormData,
-  ): Promise<ProductImage> {
-    const csrfToken = getCookie("csrftoken");
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/add_image/`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
+  async uploadProductImage(productId: number, formData: FormData): Promise<ProductImage> {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/add_image/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'X-CSRFToken': csrfToken,
       },
-    );
+      body: formData,
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to upload image");
+      throw new Error('Failed to upload image');
     }
 
     return await response.json();
   },
 
   async removeProductImage(productId: number, imageId: number): Promise<void> {
-    const csrfToken = getCookie("csrftoken");
+    const csrfToken = getCookie('csrftoken');
     const response = await fetch(
       `${BASE_URL}/api/products/${productId}/remove_image/?image_id=${imageId}`,
       {
-        method: "DELETE",
-        credentials: "include",
+        method: 'DELETE',
+        credentials: 'include',
         headers: {
-          "X-CSRFToken": csrfToken,
+          'X-CSRFToken': csrfToken,
         },
-      },
+      }
     );
 
     if (!response.ok) {
-      throw new Error("Failed to delete image");
+      throw new Error('Failed to delete image');
     }
   },
 
-  async setPrimaryImage(
-    productId: number,
-    imageId: number,
-  ): Promise<ProductImage> {
-    const csrfToken = getCookie("csrftoken");
-    const response = await fetch(
-      `${BASE_URL}/api/products/${productId}/set_primary_image/`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({ image_id: imageId }),
+  async setPrimaryImage(productId: number, imageId: number): Promise<ProductImage> {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/set_primary_image/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
       },
-    );
+      body: JSON.stringify({ image_id: imageId }),
+    });
 
     if (!response.ok) {
-      throw new Error("Failed to set primary image");
+      throw new Error('Failed to set primary image');
     }
 
     return await response.json();
