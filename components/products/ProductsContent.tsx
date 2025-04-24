@@ -1,123 +1,180 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Image from "next/image";
-import { Category, productsApi } from "@/api/products";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import { Category, productsApi } from '@/api/products';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Star, ShoppingCart, Package } from "lucide-react";
-import { toast } from "sonner";
-import { useCart } from "@/contexts/CartContext";
-import Link from "next/link";
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Star, ShoppingCart, Package, Search } from 'lucide-react';
+import { toast } from 'sonner';
+import { useCart } from '@/contexts/CartContext';
+import Link from 'next/link';
+import { Input } from '@/components/ui/input';
 
 interface Product {
   id: number;
   name: string;
   description: string;
-  price: number | string;
+  price: number;
   stock_quantity: number;
   average_rating: number;
+  created_at: string;
   main_image_url?: string;
 }
 
 export default function ProductsContent() {
-  const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const searchParams = useSearchParams();
+  const [sort, setSort] = useState(searchParams.get('ordering') || '-created_at');
+
   const { addItem } = useCart();
 
-  const initialCategory = searchParams.get("category") || "all";
-  const initialSort = searchParams.get("ordering") || "-created_at";
-
-  const [category, setCategory] = useState<string>(initialCategory);
-  const [sort, setSort] = useState<string>(initialSort);
-  const [rawProducts, setRawProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
-  // fetch categories once
   useEffect(() => {
-    productsApi.getCategories().then(setCategories).catch(console.error);
+    const fetchCategories = async () => {
+      try {
+        const data = await productsApi.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
   }, []);
 
-  // fetch products when category/search changes
-  useEffect(() => {
-    setLoading(true);
+  const fetchProducts = useCallback(async () => {
     setError(null);
+    setLoading(true);
+    try {
+      const data = await productsApi.getProducts({
+        search: searchParams.get('search') ?? undefined,
+        category: searchParams.get('category') ?? undefined,
+        ordering: searchParams.get('ordering') ?? undefined,
+      });
 
-    productsApi
-      .getProducts({
-        search: searchParams.get("search") ?? undefined,
-        category: category !== "all" ? category : undefined,
-      })
-      .then((data) => {
-        if (Array.isArray(data)) setRawProducts(data);
-        else {
-          console.error("Invalid products data", data);
-          setRawProducts([]);
-          setError("Invalid products data");
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setRawProducts([]);
-        setError("Failed to load products");
-      })
-      .finally(() => setLoading(false));
+      if (data && Array.isArray(data)) {
+        setProducts(data);
+      } else {
+        console.error('Invalid products data:', data);
+        setProducts([]);
+        setError('Failed to load products: invalid response format');
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setError('Failed to load products. Please try again later.');
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchParams]);
 
-    // update URL
-    const params = new URLSearchParams();
-    if (category !== "all") params.set("category", category);
-    if (sort !== "-created_at") params.set("ordering", sort);
-    const qs = params.toString();
-    router.replace(`/products${qs ? `?${qs}` : ""}`);
-  }, [category, searchParams.get("search")]);
+  useEffect(() => {
+    fetchProducts();
+  }, [fetchProducts]);
 
-  // client-side sort whenever rawProducts or sort changes
-  const products = useMemo(() => {
-    const arr = [...rawProducts];
+  useEffect(() => {
+    const currentSearch = searchParams.get('search');
+    if (currentSearch) {
+      setSearchTerm(currentSearch);
+    }
+  }, [searchParams]);
+
+  async function handleAddToCart(id: number): Promise<void> {
+    try {
+      await addItem(id, 1);
+      toast.success('Item added to cart!');
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+      toast.error('Failed to add item to cart');
+    }
+  }
+
+  const handleCategoryChange = (value: string) => {
+    const url = new URL(window.location.href);
+    if (value !== 'all') {
+      url.searchParams.set('category', value);
+    } else {
+      url.searchParams.delete('category');
+    }
+    window.history.pushState({}, '', url);
+    fetchProducts();
+  };
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = new URL(window.location.href);
+
+    if (searchTerm.trim()) {
+      url.searchParams.set('search', searchTerm);
+    } else {
+      url.searchParams.delete('search');
+    }
+
+    window.history.pushState({}, '', url);
+    fetchProducts();
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    const url = new URL(window.location.href);
+    url.searchParams.delete('search');
+    window.history.pushState({}, '', url);
+    fetchProducts();
+  };
+
+  const handleSortChange = (value: string) => {
+    setSort(value);
+    const url = new URL(window.location.href);
+    if (value !== '-created_at') {
+      url.searchParams.set('ordering', value);
+    } else {
+      url.searchParams.delete('ordering');
+    }
+    window.history.pushState({}, '', url);
+    fetchProducts();
+  };
+
+  const sortedProducts = useMemo(() => {
+    const arr = [...products];
     switch (sort) {
-      case "name":
+      case 'name':
         return arr.sort((a, b) => a.name.localeCompare(b.name));
-      case "-name":
+      case '-name':
         return arr.sort((a, b) => b.name.localeCompare(a.name));
-      case "price":
+      case 'price':
         return arr.sort((a, b) => Number(a.price) - Number(b.price));
-      case "-price":
+      case '-price':
         return arr.sort((a, b) => Number(b.price) - Number(a.price));
-      case "-created_at":
+      case '-created_at':
+        return arr.sort((a, b) => {
+          const dateA = new Date(a.created_at).getTime();
+          const dateB = new Date(b.created_at).getTime();
+          return dateB - dateA; // newest first
+        });
       default:
         return arr; // assume backend order is newest first
     }
-  }, [rawProducts, sort]);
+  }, [products, sort]);
 
-  const handleCategoryChange = (val: string) => setCategory(val);
-  const handleSortChange = (val: string) => setSort(val);
-
-  const handleAddToCart = async (id: number) => {
-    try {
-      await addItem(id, 1);
-      toast.success("Added to cart");
-    } catch {
-      toast.error("Could not add to cart");
-    }
-  };
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -133,15 +190,54 @@ export default function ProductsContent() {
   return (
     <div>
       <h1 className="text-3xl font-bold mb-6">Products</h1>
+
+      <form onSubmit={handleSearch} className="mb-6 flex gap-2">
+        <div className="relative flex-1">
+          <Input
+            type="text"
+            placeholder="Search products..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pr-10"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={clearSearch}
+              className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+            >
+              ×
+            </button>
+          )}
+          <Button
+            type="submit"
+            size="icon"
+            variant="ghost"
+            className="absolute right-0 top-0 h-full"
+          >
+            <Search className="h-4 w-4" />
+          </Button>
+        </div>
+      </form>
+
       <div className="mb-6 flex flex-wrap gap-4">
-        <Select onValueChange={handleCategoryChange} defaultValue={category}>
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="All Categories" />
+        <Select
+          onValueChange={handleCategoryChange}
+          defaultValue={searchParams.get('category') || 'all'}
+        >
+          <SelectTrigger className="w-[200px] bg-background border-medium-gray text-foreground">
+            <SelectValue placeholder="Select Category" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
+          <SelectContent className="bg-background border-medium-gray">
+            <SelectItem value="all" className="text-foreground hover:bg-light-gray">
+              All Categories
+            </SelectItem>
             {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id.toString()}>
+              <SelectItem
+                key={cat.id}
+                value={cat.id.toString()}
+                className="text-foreground hover:bg-light-gray"
+              >
                 {cat.name}
               </SelectItem>
             ))}
@@ -149,38 +245,48 @@ export default function ProductsContent() {
         </Select>
 
         <Select onValueChange={handleSortChange} defaultValue={sort}>
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="w-[200px] bg-background border-medium-gray text-foreground">
             <SelectValue placeholder="Sort By" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="name">A → Z</SelectItem>
-            <SelectItem value="-name">Z → A</SelectItem>
-            <SelectItem value="price">Low → High</SelectItem>
-            <SelectItem value="-price">High → Low</SelectItem>
-            <SelectItem value="-created_at">New Arrivals</SelectItem>
+          <SelectContent className="bg-background border-medium-gray">
+            <SelectItem value="name" className="text-foreground hover:bg-light-gray">
+              A → Z
+            </SelectItem>
+            <SelectItem value="-name" className="text-foreground hover:bg-light-gray">
+              Z → A
+            </SelectItem>
+            <SelectItem value="price" className="text-foreground hover:bg-light-gray">
+              Low → High
+            </SelectItem>
+            <SelectItem value="-price" className="text-foreground hover:bg-light-gray">
+              High → Low
+            </SelectItem>
+            <SelectItem value="-created_at" className="text-foreground hover:bg-light-gray">
+              New Arrivals
+            </SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {products.length > 0 ? (
+      {sortedProducts && sortedProducts.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {products.map((p) => (
-            <Card key={p.id} className="overflow-hidden hover:shadow-lg">
+          {sortedProducts.map((product) => (
+            <Card key={product.id} className="overflow-hidden transition-shadow hover:shadow-lg">
               <Link
-                href={`/products/${p.id}`}
+                href={`/products/${product.id}`}
                 className="block aspect-square relative overflow-hidden"
               >
-                {p.main_image_url ? (
+                {product.main_image_url ? (
                   <Image
                     src={
-                      p.main_image_url.startsWith("http")
-                        ? p.main_image_url
-                        : `${apiBase}${p.main_image_url}`
+                      product.main_image_url.startsWith('http')
+                        ? product.main_image_url
+                        : `${apiBaseUrl}${product.main_image_url}`
                     }
-                    alt={p.name}
+                    alt={product.name}
                     fill
                     sizes="(max-width: 768px) 100vw, 33vw"
-                    className="object-contain hover:scale-105 transition-transform"
+                    className="object-contain transition-transform duration-300 hover:scale-105"
                     unoptimized
                   />
                 ) : (
@@ -190,30 +296,29 @@ export default function ProductsContent() {
                 )}
               </Link>
               <CardContent className="p-4">
-                <Link href={`/products/${p.id}`} className="block hover:underline">
-                  <h3 className="text-lg font-semibold mb-2 line-clamp-1">
-                    {p.name}
+                <Link href={`/products/${product.id}`} className="block hover:underline">
+                  <h3 className="text-lg font-semibold text-foreground mb-2 line-clamp-1">
+                    {product.name}
                   </h3>
                 </Link>
-                <p className="text-sm line-clamp-2">{p.description}</p>
+                <p className="text-dark-gray text-sm line-clamp-2">{product.description}</p>
                 <div className="flex justify-between items-center mt-3">
-                  <span className="text-lg font-bold">
-                    ${Number(p.price).toFixed(2)}
-                  </span>
+                  <span className="text-lg font-bold text-foreground">${product.price}</span>
                   <Badge
-                    variant={p.stock_quantity > 0 ? "default" : "destructive"}
+                    variant={product.stock_quantity > 0 ? 'default' : 'destructive'}
+                    className="text-background"
                   >
-                    {p.stock_quantity > 0 ? "In stock" : "Out of stock"}
+                    {product.stock_quantity > 0 ? `In stock` : 'Out of stock'}
                   </Badge>
                 </div>
                 <div className="flex items-center mt-2">
                   {[...Array(5)].map((_, i) => (
                     <Star
                       key={i}
-                      className={`w-4 h-4 ${
-                        i < Math.floor(p.average_rating || 0)
-                          ? "fill-yellow-400 text-yellow-400"
-                          : "fill-gray-200 text-gray-200"
+                      className={`w-3 h-3 ${
+                        i < Math.floor(product.average_rating || 0)
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'fill-gray-200 text-gray-200'
                       }`}
                     />
                   ))}
@@ -221,11 +326,12 @@ export default function ProductsContent() {
               </CardContent>
               <CardFooter>
                 <Button
+                  className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleAddToCart(p.id);
+                    handleAddToCart(product.id);
                   }}
-                  disabled={p.stock_quantity <= 0}
+                  disabled={product.stock_quantity <= 0}
                 >
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Add to Cart
@@ -237,10 +343,9 @@ export default function ProductsContent() {
       ) : (
         <div className="text-center py-12">
           <h3 className="text-xl font-semibold">No products found</h3>
-          <p className="mt-2">Try adjusting your filters</p>
+          <p className="text-muted-foreground mt-2">Try adjusting your filters</p>
         </div>
       )}
     </div>
   );
 }
-
