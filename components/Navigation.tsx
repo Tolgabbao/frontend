@@ -1,27 +1,20 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  ShoppingCart,
-  User,
-  LogOut,
-  Package,
-  Home,
-  Settings,
-} from "lucide-react";
-import { ModeToggle } from "@/components/mode-toggle";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCart } from "@/contexts/CartContext";
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { ShoppingCart, User, LogOut, Package, Home, Settings } from 'lucide-react';
+import { ModeToggle } from '@/components/mode-toggle';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 export default function Navigation() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -31,9 +24,9 @@ export default function Navigation() {
   const handleLogout = async () => {
     try {
       await logout();
-      router.push("/login");
+      router.push('/login');
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error('Logout failed:', error);
     }
   };
 
@@ -72,15 +65,10 @@ export default function Navigation() {
               <>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      className="relative h-8 w-8 rounded-full"
-                    >
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                       <Avatar>
                         <AvatarFallback>
-                          {user?.username
-                            ? user.username[0].toUpperCase()
-                            : "U"}
+                          {user?.username ? user.username[0].toUpperCase() : 'U'}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -104,14 +92,11 @@ export default function Navigation() {
                     </DropdownMenuItem>
 
                     {/* Show Admin Panel link only if user is staff */}
-                    {user?.is_staff && (
+                    {user?.is_staff === true && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>
-                          <Link
-                            href="/admin/products"
-                            className="flex items-center"
-                          >
+                          <Link href="/admin/products" className="flex items-center">
                             <Settings className="w-4 h-4 mr-2" />
                             Admin Panel
                           </Link>
