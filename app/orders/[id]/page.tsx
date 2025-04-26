@@ -9,7 +9,7 @@ import { orderApi, Order } from '@/api/order';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingBag, ArrowLeft } from 'lucide-react';
+import { ShoppingBag, ArrowLeft, Download } from 'lucide-react'; // Import Download icon
 import { toast } from 'sonner';
 
 export default function OrderDetailPage() {
@@ -20,6 +20,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [downloading, setDownloading] = useState(false); // State for download button
   const [pageReady, setPageReady] = useState(false);
 
   // Get the API base URL for constructing full image URLs
@@ -80,6 +81,30 @@ export default function OrderDetailPage() {
       toast.error('Failed to cancel order');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  // Handle invoice download
+  const handleDownloadInvoice = async () => {
+    if (!order) return;
+
+    setDownloading(true);
+    try {
+      const blob = await orderApi.downloadOrderInvoice(order.id);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `order_${order.id}_invoice.pdf`); // Set filename
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link); // Clean up
+      window.URL.revokeObjectURL(url); // Free up memory
+      toast.success('Invoice downloaded successfully');
+    } catch (err) {
+      console.error('Error downloading invoice:', err);
+      toast.error('Failed to download invoice. Please try again.');
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -239,7 +264,28 @@ export default function OrderDetailPage() {
                 </div>
               </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex flex-col gap-2">
+              {/* Download Invoice Button */}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleDownloadInvoice}
+                disabled={downloading}
+              >
+                {downloading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Invoice
+                  </>
+                )}
+              </Button>
+
+              {/* Cancel Order Button */}
               {order.status === 'PROCESSING' && (
                 <Button
                   variant="destructive"

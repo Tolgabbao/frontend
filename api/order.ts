@@ -120,4 +120,19 @@ export const orderApi = {
       throw new Error('Failed to cancel order');
     }
   },
+
+  downloadOrderInvoice: async (id: number): Promise<Blob> => {
+    const response = await fetch(`${BASE_URL}/api/orders/${id}/download-invoice/`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to download invoice: ${errorText}`);
+    }
+
+    // Return the response body as a Blob
+    return await response.blob();
+  },
 };
