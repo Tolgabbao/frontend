@@ -55,31 +55,40 @@ export default function ProductsContent() {
     fetchCategories();
   }, []);
 
-  const fetchProducts = useCallback(async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      const data = await productsApi.getProducts({
-        search: searchParams.get('search') ?? undefined,
-        category: searchParams.get('category') ?? undefined,
-        ordering: searchParams.get('ordering') ?? undefined,
-      });
+  const fetchProducts = useCallback(
+    async (orderingOverride?: string) => {
+      setError(null);
+      setLoading(true);
+      try {
+        // Use override if provided, otherwise get from searchParams
+        const currentOrdering =
+          orderingOverride !== undefined
+            ? orderingOverride
+            : (searchParams.get('ordering') ?? undefined);
 
-      if (data && Array.isArray(data)) {
-        setProducts(data);
-      } else {
-        console.error('Invalid products data:', data);
+        const data = await productsApi.getProducts({
+          search: searchParams.get('search') ?? undefined,
+          category: searchParams.get('category') ?? undefined,
+          ordering: currentOrdering, // Use the potentially adjusted ordering
+        });
+
+        if (data && Array.isArray(data)) {
+          setProducts(data);
+        } else {
+          console.error('Invalid products data:', data);
+          setProducts([]);
+          setError('Failed to load products: invalid response format');
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setError('Failed to load products. Please try again later.');
         setProducts([]);
-        setError('Failed to load products: invalid response format');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      setError('Failed to load products. Please try again later.');
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchParams]);
+    },
+    [searchParams]
+  );
 
   useEffect(() => {
     fetchProducts();
@@ -136,20 +145,38 @@ export default function ProductsContent() {
   };
 
   const handleSortChange = (value: string) => {
-    setSort(value);
+    setSort(value); // Update local sort state regardless
+
     const url = new URL(window.location.href);
-    if (value !== '-created_at') {
+    let fetchOrdering: string | undefined = value;
+
+    // If sorting by popularity, don't send it to backend, remove ordering param
+    if (value === '-average_rating') {
+      url.searchParams.delete('ordering');
+      fetchOrdering = undefined; // Don't pass this specific ordering to fetchProducts
+    } else if (value !== '-created_at') {
       url.searchParams.set('ordering', value);
     } else {
+      // If default ('-created_at'), remove the param from URL
       url.searchParams.delete('ordering');
     }
+
     window.history.pushState({}, '', url);
-    fetchProducts();
+
+    // Fetch products, potentially without the ordering param if it was -average_rating
+    // Need to slightly modify fetchProducts call or how it reads params
+    // Easiest is to rely on searchParams which are updated by pushState,
+    // but pushState doesn't trigger re-render/refetch automatically.
+    // We'll manually call fetchProducts, but it reads from searchParams.
+    // Let's adjust fetchProducts to accept the ordering override
+    fetchProducts(fetchOrdering);
   };
 
   const sortedProducts = useMemo(() => {
     const arr = [...products];
-    switch (sort) {
+    switch (
+      sort // Use the local 'sort' state for client-side sorting
+    ) {
       case 'name':
         return arr.sort((a, b) => a.name.localeCompare(b.name));
       case '-name':
@@ -158,6 +185,8 @@ export default function ProductsContent() {
         return arr.sort((a, b) => Number(a.price) - Number(b.price));
       case '-price':
         return arr.sort((a, b) => Number(b.price) - Number(a.price));
+      case '-average_rating': // Keep this for client-side sorting
+        return arr.sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0));
       case '-created_at':
         return arr.sort((a, b) => {
           const dateA = new Date(a.created_at).getTime();
@@ -165,9 +194,11 @@ export default function ProductsContent() {
           return dateB - dateA; // newest first
         });
       default:
-        return arr; // assume backend order is newest first
+        // If backend provided an order (e.g., default -created_at), respect it
+        // Otherwise, return unsorted or apply a default client-side sort
+        return arr;
     }
-  }, [products, sort]);
+  }, [products, sort]); // Depend on local 'sort' state
 
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -260,6 +291,11 @@ export default function ProductsContent() {
             </SelectItem>
             <SelectItem value="-price" className="text-foreground hover:bg-light-gray">
               High → Low
+            </SelectItem>
+            <SelectItem value="-average_rating" className="text-foreground hover:bg-light-gray">
+              {' '}
+              {/* Keep Popularity option */}
+              Popularity
             </SelectItem>
             <SelectItem value="-created_at" className="text-foreground hover:bg-light-gray">
               New Arrivals
