@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Add useCallback import
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -82,6 +82,21 @@ export default function CheckoutPage() {
   // Get the API base URL for constructing full image URLs
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+  // Wrap fillAddressForm in useCallback
+  const fillAddressForm = useCallback(
+    (selectedAddress: Address) => {
+      setAddress({
+        fullName: user?.username || '',
+        streetAddress: selectedAddress.street_address,
+        city: selectedAddress.city,
+        state: selectedAddress.state,
+        postalCode: selectedAddress.postal_code,
+        country: selectedAddress.country,
+      });
+    },
+    [user]
+  ); // Add user as dependency since we use user?.username
+
   // Handle authentication redirect and fetch addresses in useEffect
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -133,19 +148,7 @@ export default function CheckoutPage() {
         setPageReady(true);
       }
     }
-  }, [authLoading, cartLoading, isAuthenticated, router, user, apiBaseUrl]);
-
-  // Fill the address form with selected address data
-  const fillAddressForm = (selectedAddress: Address) => {
-    setAddress({
-      fullName: user?.username || '',
-      streetAddress: selectedAddress.street_address,
-      city: selectedAddress.city,
-      state: selectedAddress.state,
-      postalCode: selectedAddress.postal_code,
-      country: selectedAddress.country,
-    });
-  };
+  }, [authLoading, cartLoading, isAuthenticated, router, user, apiBaseUrl, fillAddressForm]); // The useEffect now uses the memoized fillAddressForm
 
   // Handle address selection change
   const handleAddressChange = (value: string) => {

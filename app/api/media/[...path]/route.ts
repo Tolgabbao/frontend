@@ -1,41 +1,80 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
 
+// Helper function to get content type based on file extension
+const getContentType = (path: string): string => {
+  const extension = path.split('.').pop()?.toLowerCase();
+
+  switch (extension) {
+    case 'jpg':
+    case 'jpeg':
+      return 'image/jpeg';
+    case 'png':
+      return 'image/png';
+    case 'gif':
+      return 'image/gif';
+    case 'webp':
+      return 'image/webp';
+    case 'pdf':
+      return 'application/pdf';
+    default:
+      return 'application/octet-stream';
+  }
+};
+
+// Define the types for the context param
+export type Context = {
+  params: {
+    path: string[];
+  };
+};
+
+// This function handles GET requests to /api/media/[...path]
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } },
+  // Using the explicit Promise-based params type as suggested
+  context: { params: Promise<{ path: string[] }> }
 ) {
-  const path = params.path.join("/");
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
-
   try {
-    // Pass along cookies for authentication
-    const headers = new Headers();
-    const cookie = request.headers.get("cookie");
-    if (cookie) {
-      headers.set("cookie", cookie);
-    }
+    // Extract the path from the Promise-based params
+    const paramsResolved = await context.params;
+    const path = paramsResolved.path.join('/');
 
-    // Forward the request to the backend
-    const response = await fetch(`${apiBaseUrl}/media/${path}`, {
-      headers,
+    // Get the API URL from environment variable
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+
+    // Create the URL to fetch from backend
+    const url = `${apiBaseUrl}/media/${path}`;
+
+    // Fetch the file from the backend
+    const response = await fetch(url, {
+      method: 'GET',
+      // Avoid sending credentials for media files
+      credentials: 'omit',
     });
 
     if (!response.ok) {
-      return new Response("Image not found", { status: 404 });
+      return new NextResponse(null, {
+        status: response.status,
+        statusText: response.statusText,
+      });
     }
 
-    // Forward the response from the backend
-    const contentType = response.headers.get("content-type") || "image/jpeg";
-    const blob = await response.blob();
+    // Get the file content
+    const arrayBuffer = await response.arrayBuffer();
 
-    return new Response(blob, {
+    // Determine the content type
+    const contentType = getContentType(path);
+
+    // Return the file as a response with appropriate content type
+    return new NextResponse(arrayBuffer, {
+      status: 200,
       headers: {
-        "content-type": contentType,
-        "cache-control": "public, max-age=31536000, immutable", // Cache for 1 year
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=31536000', // Cache for 1 year
       },
     });
   } catch (error) {
-    console.error("Error proxying media request:", error);
-    return new Response("Error loading image", { status: 500 });
+    console.error('Error fetching media file:', error);
+    return new NextResponse(null, { status: 500 });
   }
 }

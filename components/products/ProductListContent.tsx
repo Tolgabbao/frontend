@@ -187,7 +187,7 @@ export default function ProductListContent() {
                       <div className="w-full h-full relative">
                         {!failedImages[product.id] ? (
                           <Image
-                            src={`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}/image/`}
+                            src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/products/${product.id}/image/`}
                             alt={product.name}
                             fill
                             className="object-cover rounded-t-lg"
@@ -251,7 +251,7 @@ export default function ProductListContent() {
                   <div className="w-full h-full relative">
                     {!failedImages[product.id] ? (
                       <Image
-                        src={`${process.env.NEXT_PUBLIC_API_URL}/api/products/${product.id}/image/`}
+                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/'}/api/products/${product.id}/image/`}
                         alt={product.name}
                         fill
                         className="object-cover rounded-t-lg"

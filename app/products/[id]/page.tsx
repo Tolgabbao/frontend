@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Add useCallback import
 import { useParams } from 'next/navigation';
 import { Product, productsApi } from '@/api/products';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,12 @@ export default function ProductDetailPage() {
   // Get the API base URL for constructing full image URLs
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-  const fetchProduct = async () => {
+  // Wrap fetchProduct in useCallback
+  const fetchProduct = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      const productId = Array.isArray(id) ? parseInt(id[0]) : id ? parseInt(id.toString()) : 0;
+      const productId = Array.isArray(id) ? parseInt(id[0]) : parseInt(id as string);
       const data = await productsApi.getProduct(productId);
       setProduct(data);
 
@@ -46,11 +49,12 @@ export default function ProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]); // Add dependencies that fetchProduct relies on
 
+  // Fetch product data
   useEffect(() => {
     fetchProduct();
-  }, [id]);
+  }, [fetchProduct]); // Now fetchProduct won't change on every render
 
   const handleAddToCart = async () => {
     if (!product) return;
@@ -257,7 +261,7 @@ export default function ProductDetailPage() {
                     </li>
                     <li className="flex justify-between border-b pb-1">
                       <span className="text-muted-foreground">Model:</span>
-                      <span>{product.model || 'N/A'}</span>
+                      <span>{product?.model || 'N/A'}</span> {/* Add optional chaining */}
                     </li>
                     {product.serial_number && (
                       <li className="flex justify-between border-b pb-1">

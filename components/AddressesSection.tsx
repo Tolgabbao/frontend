@@ -1,42 +1,32 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { UserDetails, Address } from '@/contexts/AuthContext';
+import React from 'react';
 
-// Address type definition based on your backend model
-interface Address {
-  id: number;
-  name: string;
-  street_address: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  country: string;
-  is_main: boolean;
-}
-
+// Update interface to make setProfile optional
 interface AddressesSectionProps {
   profile: UserDetails | null;
-  setProfile: React.Dispatch<React.SetStateAction<UserDetails | null>>; // Add this line
+  setProfile?: React.Dispatch<React.SetStateAction<UserDetails | null>>; // Make this optional
 }
 
 // Component for displaying and managing user addresses
-export default function AddressesSection({ profile, setProfile }: AddressesSectionProps) {
+export default function AddressesSection({ profile }: AddressesSectionProps) {
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  
+  const [error, setError] = useState('');
+
   // Form states
   const [showForm, setShowForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<number | null>(null);
   const [formData, setFormData] = useState<Omit<Address, 'id'>>({
-    name: "",
-    street_address: "",
-    city: "",
-    state: "",
-    postal_code: "",
-    country: "",
-    is_main: false
+    name: '',
+    street_address: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    country: '',
+    is_main: false,
   });
 
   useEffect(() => {
@@ -48,7 +38,7 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
         if (!a.is_main && b.is_main) return 1;
         return 0;
       });
-      
+
       setAddresses(sortedAddresses);
       setLoading(false);
     } else {
@@ -59,51 +49,51 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
 
   const fetchAddresses = async () => {
     try {
-      const response = await fetch("http://localhost:8000/addresses/", {
-        credentials: "include",
+      const response = await fetch('http://localhost:8000/addresses/', {
+        credentials: 'include',
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        console.log("Fetched addresses from backend:", data);
+        console.log('Fetched addresses from backend:', data);
         // Sort addresses - main address first
-        const sortedAddresses = Array.isArray(data) 
-        ? [...data].sort((a, b) => {
-            if (a.is_main && !b.is_main) return -1;
-            if (!a.is_main && b.is_main) return 1;
-            return 0;
-          })
-        : [];
-        
+        const sortedAddresses = Array.isArray(data)
+          ? [...data].sort((a, b) => {
+              if (a.is_main && !b.is_main) return -1;
+              if (!a.is_main && b.is_main) return 1;
+              return 0;
+            })
+          : [];
+
         setAddresses(sortedAddresses);
       } else {
-        throw new Error("Failed to fetch addresses");
+        throw new Error('Failed to fetch addresses');
       }
     } catch (error) {
-      console.error("Error fetching addresses:", error);
-      setError("Failed to load addresses");
+      console.error('Error fetching addresses:', error);
+      setError('Failed to load addresses');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value, type, checked } = e.target;
     setFormData({
       ...formData,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === 'checkbox' ? checked : value,
     });
   };
 
   const resetForm = () => {
     setFormData({
-      name: "",
-      street_address: "",
-      city: "",
-      state: "",
-      postal_code: "",
-      country: "",
-      is_main: false
+      name: '',
+      street_address: '',
+      city: '',
+      state: '',
+      postal_code: '',
+      country: '',
+      is_main: false,
     });
     setEditingAddressId(null);
   };
@@ -121,105 +111,109 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
       state: address.state,
       postal_code: address.postal_code,
       country: address.country,
-      is_main: address.is_main
+      is_main: address.is_main,
     });
     setEditingAddressId(address.id);
     setShowForm(true);
   };
 
-  const getCSRFToken = () => {
-    return document.cookie.split("; ")
-      .find(row => row.startsWith("csrftoken="))
-      ?.split("=")[1];
+  // Improve CSRF token retrieval to return string instead of undefined
+  const getCSRFToken = (): string => {
+    return (
+      document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('csrftoken='))
+        ?.split('=')[1] || ''
+    );
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
-    setError("");
-  
+    setError('');
+
     try {
       const csrfToken = getCSRFToken();
       let response;
-  
+
       if (editingAddressId) {
         response = await fetch(`http://localhost:8000/addresses/${editingAddressId}/`, {
-          method: "PUT",
+          method: 'PUT',
           headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
           },
-          credentials: "include",
+          credentials: 'include',
           body: JSON.stringify(formData),
         });
       } else {
-        response = await fetch("http://localhost:8000/addresses/", {
-          method: "POST",
+        response = await fetch('http://localhost:8000/addresses/', {
+          method: 'POST',
           headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": csrfToken,
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
           },
-          credentials: "include",
+          credentials: 'include',
           body: JSON.stringify(formData),
         });
       }
-  
+
       const responseData = await response.json();
-  
+
       if (response.ok) {
         // Update addresses state with proper main address handling
         let updatedAddresses;
-        
+
         if (formData.is_main) {
           // If setting as main, update all other addresses to not be main
           if (editingAddressId) {
-            updatedAddresses = addresses.map(addr => ({
+            updatedAddresses = addresses.map((addr) => ({
               ...addr,
-              is_main: addr.id === editingAddressId
+              is_main: addr.id === editingAddressId,
             }));
           } else {
             // For new address being set as main
-            updatedAddresses = addresses.map(addr => ({
+            updatedAddresses = addresses.map((addr) => ({
               ...addr,
-              is_main: false
+              is_main: false,
             }));
             updatedAddresses.push({
               ...responseData,
-              is_main: true
+              is_main: true,
             });
           }
         } else {
           // Not setting as main
           if (editingAddressId) {
             // Check if we're unchecking the current main
-            const currentAddress = addresses.find(addr => addr.id === editingAddressId);
+            const currentAddress = addresses.find((addr) => addr.id === editingAddressId);
             if (currentAddress?.is_main && !formData.is_main) {
               // Find another address to set as main
-              const otherAddress = addresses.find(addr => addr.id !== editingAddressId);
+              const otherAddress = addresses.find((addr) => addr.id !== editingAddressId);
               if (otherAddress) {
-                updatedAddresses = addresses.map(addr => ({
+                updatedAddresses = addresses.map((addr) => ({
                   ...addr,
-                  is_main: addr.id === otherAddress.id
+                  is_main: addr.id === otherAddress.id,
                 }));
-                
+
                 // Call API to set the other address as main
                 await fetch(`http://localhost:8000/addresses/${otherAddress.id}/set-main/`, {
-                  method: "PUT",
-                  credentials: "include",
+                  method: 'PUT',
+                  credentials: 'include',
                   headers: {
-                    "X-CSRFToken": csrfToken,
+                    'X-CSRFToken': csrfToken,
                   },
                 });
               } else {
                 // No other address, keep this one as main
-                updatedAddresses = addresses.map(addr => ({
+                updatedAddresses = addresses.map((addr) => ({
                   ...addr,
-                  is_main: addr.id === editingAddressId
+                  is_main: addr.id === editingAddressId,
                 }));
               }
             } else {
               // Not changing main status
-              updatedAddresses = addresses.map(addr => 
+              updatedAddresses = addresses.map((addr) =>
                 addr.id === editingAddressId ? { ...responseData } : addr
               );
             }
@@ -228,76 +222,80 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
             updatedAddresses = [...addresses, responseData];
           }
         }
-        
+
         // Sort addresses - main address first, then by update date
         updatedAddresses.sort((a, b) => {
           if (a.is_main && !b.is_main) return -1;
           if (!a.is_main && b.is_main) return 1;
           return 0;
         });
-        
+
         setAddresses(updatedAddresses);
-        
+
         // Update profile's main address
-        const mainAddress = updatedAddresses.find(addr => addr.is_main);
+        const mainAddress = updatedAddresses.find((addr) => addr.is_main);
         if (mainAddress) {
           //updateProfileMainAddress(mainAddress);
         }
-        
+
         setShowForm(false);
         resetForm();
       } else {
-        throw new Error(responseData?.detail || "Failed to save address");
+        throw new Error(responseData?.detail || 'Failed to save address');
       }
-    } catch (error) {
-      console.error("Error saving address:", error);
-      setError(error.message);
+    } catch (error: unknown) {
+      console.error('Error saving address:', error);
+      // Handle the unknown error type properly
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     } finally {
       setLoading(false);
     }
   };
-  
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this address?")) {
+    if (!confirm('Are you sure you want to delete this address?')) {
       return;
     }
-    
+
     setLoading(true);
-    setError("");
-    
+    setError('');
+
     try {
       const csrfToken = getCSRFToken();
       const response = await fetch(`http://localhost:8000/addresses/${id}/`, {
-        method: "DELETE",
-        credentials: "include",
+        method: 'DELETE',
+        credentials: 'include',
         headers: {
-          "X-CSRFToken": csrfToken, // Include CSRF token
+          'X-CSRFToken': csrfToken,
         },
       });
-      
-      if (response.ok) {
-          let updatedAddresses = addresses.filter(addr => addr.id !== id);
 
-          // Ensure updatedAddresses is always an array
-          if (!Array.isArray(updatedAddresses)) {
-            updatedAddresses = [];
-          }
-        
+      if (response.ok) {
+        let updatedAddresses = addresses.filter((addr) => addr.id !== id);
+
+        // Ensure updatedAddresses is always an array
+        if (!Array.isArray(updatedAddresses)) {
+          updatedAddresses = [];
+        }
+
         // If the deleted address was main, assign the first available address as main
-        if (updatedAddresses.length > 0 && updatedAddresses.every(addr => !addr.is_main)) {
+        if (updatedAddresses.length > 0 && updatedAddresses.every((addr) => !addr.is_main)) {
           updatedAddresses[0].is_main = true;
         }
 
         setAddresses(updatedAddresses);
         //updateProfileMainAddress(updatedAddresses);
-        setError("");
+        setError('');
       } else {
-        throw new Error("Failed to delete address");
+        throw new Error('Failed to delete address');
       }
-    } catch (error) {
-      console.error("Error deleting address:", error);
-      setError("Failed to delete address");
+    } catch (error: unknown) {
+      console.error('Error deleting address:', error);
+      setError(error instanceof Error ? error.message : 'Failed to delete address');
     } finally {
       setLoading(false);
     }
@@ -305,21 +303,21 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
 
   const handleSetMain = async (id: number) => {
     setLoading(true);
-    setError(""); // Clear previous errors
-  
+    setError(''); // Clear previous errors
+
     try {
       const csrfToken = getCSRFToken();
       const response = await fetch(`http://localhost:8000/addresses/${id}/set-main/`, {
-        method: "PUT",
-        credentials: "include",
+        method: 'PUT',
+        credentials: 'include',
         headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
         },
       });
-  
+
       if (response.ok) {
-        let updatedAddresses = addresses.map(addr => ({
+        let updatedAddresses = addresses.map((addr) => ({
           ...addr,
           is_main: addr.id === id,
         }));
@@ -335,26 +333,25 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
           if (!a.is_main && b.is_main) return 1;
           return 0;
         });
-  
+
         setAddresses(updatedAddresses);
-        
+
         // Find the new main address and update profile
-        const newMainAddress = updatedAddresses.find(addr => addr.id === id);
+        const newMainAddress = updatedAddresses.find((addr) => addr.id === id);
         if (newMainAddress) {
           //updateProfileMainAddress(newMainAddress);
         }
-        setError("");
+        setError('');
       } else {
-        throw new Error("Failed to set as main address");
+        throw new Error('Failed to set as main address');
       }
-    } catch (error) {
-      console.error("Error setting main address:", error);
-      setError("Failed to set as main address");
+    } catch (error: unknown) {
+      console.error('Error setting main address:', error);
+      setError(error instanceof Error ? error.message : 'Failed to set as main address');
     } finally {
       setLoading(false);
     }
   };
-  
 
   // Update the updateProfileMainAddress method
   /*
@@ -381,7 +378,6 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
     }
   };
   */
-  
 
   if (loading && addresses.length === 0) {
     return (
@@ -406,16 +402,12 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
         </button>
       </div>
 
-      {error && (
-        <div className="bg-error bg-opacity-10 text-error p-3 rounded mb-4">
-          {error}
-        </div>
-      )}
+      {error && <div className="bg-error bg-opacity-10 text-error p-3 rounded mb-4">{error}</div>}
 
       {showForm && (
         <div className="bg-light-gray p-4 rounded-lg mb-6">
           <h3 className="text-lg font-semibold mb-4">
-            {editingAddressId ? "Edit Address" : "Add New Address"}
+            {editingAddressId ? 'Edit Address' : 'Add New Address'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -528,7 +520,7 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
                 className="bg-primary text-background px-4 py-2 rounded hover:bg-opacity-90"
                 disabled={loading}
               >
-                {loading ? "Saving..." : "Save Address"}
+                {loading ? 'Saving...' : 'Save Address'}
               </button>
             </div>
           </form>
@@ -537,15 +529,12 @@ export default function AddressesSection({ profile, setProfile }: AddressesSecti
 
       {addresses.length === 0 ? (
         <div className="text-dark-gray text-center py-8">
-          <p>You haven't added any addresses yet.</p>
+          <p>You haven&apos;t added any addresses yet.</p>
         </div>
       ) : (
         <div className="space-y-4">
           {addresses.map((address) => (
-            <div
-              key={address.id}
-              className="border border-medium-gray rounded-lg p-4 relative"
-            >
+            <div key={address.id} className="border border-medium-gray rounded-lg p-4 relative">
               <div className="flex justify-between">
                 <div>
                   <div className="flex items-center">

@@ -1,13 +1,18 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from "react";
-import { authApi } from "@/api/auth";
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { authApi } from '@/api/auth';
+
+export interface Address {
+  id: number;
+  name: string;
+  street_address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  is_main: boolean;
+}
 
 export interface UserDetails {
   id?: number;
@@ -15,6 +20,7 @@ export interface UserDetails {
   email: string;
   date_joined?: string;
   is_staff?: boolean; // Add is_staff property
+  addresses?: Address[]; // Assuming addresses is an array of strings
 }
 
 interface AuthContextType {
@@ -42,7 +48,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
       }
     } catch (error) {
-      console.error("Error checking auth status:", error);
+      console.error('Error checking auth status:', error);
       setUser(null);
     } finally {
       setIsLoading(false);
@@ -70,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       return false;
     } catch (error) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
       return false;
     }
   };
@@ -81,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       return true;
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error('Logout error:', error);
       return false;
     }
   };
@@ -105,7 +111,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

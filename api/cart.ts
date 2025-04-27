@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL = 'http://localhost:8000';
 
 // Function to get CSRF token from cookies
 const getCSRFToken = () => {

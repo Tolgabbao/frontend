@@ -35,6 +35,9 @@ export interface Product {
   is_visible: boolean; // Changed from boolean | undefined to boolean
   images: ProductImage[];
   main_image_url: string;
+  model: string;
+  serial_number: string;
+  warranty_months: string;
 }
 
 interface ProductQueryParams {
