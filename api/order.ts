@@ -46,9 +46,19 @@ export interface Order {
   }[];
 }
 
+// Define interface for paginated response
+export interface PaginatedOrdersResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: Order[];
+}
+
 export const orderApi = {
-  getOrders: async (): Promise<Order[]> => {
-    const response = await fetch(`${BASE_URL}/api/orders/`, {
+  // Modify getOrders to accept optional URL and return PaginatedOrdersResponse
+  getOrders: async (url?: string): Promise<PaginatedOrdersResponse> => {
+    const fetchUrl = url || `${BASE_URL}/api/orders/`; // Use provided URL or default
+    const response = await fetch(fetchUrl, {
       credentials: 'include',
     });
 
@@ -58,16 +68,21 @@ export const orderApi = {
 
     const data = await response.json();
 
-    // Handle different response formats
-    if (Array.isArray(data)) {
-      return data;
-    } else if (data.results && Array.isArray(data.results)) {
-      return data.results;
-    } else if (data && typeof data === 'object') {
-      return [data];
+    // Ensure the response matches the expected paginated structure
+    if (
+      typeof data === 'object' &&
+      data !== null &&
+      typeof data.count === 'number' &&
+      Array.isArray(data.results) &&
+      (data.next === null || typeof data.next === 'string') &&
+      (data.previous === null || typeof data.previous === 'string')
+    ) {
+      return data as PaginatedOrdersResponse;
     } else {
+      // Handle potential non-paginated response or error format
       console.error('Received unexpected data format from API:', data);
-      return [];
+      // Return a default empty paginated structure or throw a more specific error
+      return { count: 0, next: null, previous: null, results: [] };
     }
   },
 
