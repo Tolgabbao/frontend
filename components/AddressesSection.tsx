@@ -406,7 +406,7 @@ export default function AddressesSection({ profile }: AddressesSectionProps) {
 
       {showForm && (
         <div className="bg-light-gray p-4 rounded-lg mb-6">
-          <h3 className="text-lg font-semibold mb-4">
+           <h3 className="text-primary dark:text-primary-light text-lg font-semibold mb-4">
             {editingAddressId ? 'Edit Address' : 'Add New Address'}
           </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -511,7 +511,7 @@ export default function AddressesSection({ profile }: AddressesSectionProps) {
                   setShowForm(false);
                   resetForm();
                 }}
-                className="border border-medium-gray px-4 py-2 rounded hover:bg-light-gray"
+                className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 bg-background dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Cancel
               </button>
