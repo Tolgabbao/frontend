@@ -145,16 +145,12 @@ export default function ProductsAdminPage() {
                   ${Number(product.price).toFixed(2)}
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge
-                    variant={
-                      product.stock_quantity > 0 ? "default" : "destructive"
-                    }
-                  >
+                  <Badge className={product.stock_quantity > 0 ? "bg-green-500 text-white" : "bg-red-500 text-white"}>
                     {product.stock_quantity}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-center">
-                  <Badge variant={product.is_visible ? "default" : "secondary"}>
+                <Badge className={product.is_visible ? "bg-purple-500 text-white" : "bg-red-500 text-white"}>
                     {product.is_visible ? "Visible" : "Hidden"}
                   </Badge>
                 </TableCell>
