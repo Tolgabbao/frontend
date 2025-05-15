@@ -14,9 +14,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Star, ShoppingCart, Package, Search } from 'lucide-react';
+import { Star, ShoppingCart, Package, Search, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
 
@@ -25,10 +26,14 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  original_price: number;
+  discount_percent: number;
+  has_discount: boolean;
   stock_quantity: number;
   average_rating: number;
   created_at: string;
   main_image_url?: string;
+  in_wishlist?: boolean;
 }
 
 export default function ProductsContent() {
@@ -41,6 +46,7 @@ export default function ProductsContent() {
   const [sort, setSort] = useState(searchParams.get('ordering') || '-created_at');
 
   const { addItem } = useCart();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -108,6 +114,32 @@ export default function ProductsContent() {
     } catch (error) {
       console.error('Error adding to cart:', error);
       toast.error('Failed to add item to cart');
+    }
+  }
+
+  async function handleWishlistToggle(product: Product): Promise<void> {
+    if (!isAuthenticated) {
+      toast.error('You must be logged in to use the wishlist feature');
+      return;
+    }
+
+    try {
+      if (product.in_wishlist) {
+        await productsApi.removeFromWishlist(product.id);
+        setProducts((prevProducts) =>
+          prevProducts.map((p) => (p.id === product.id ? { ...p, in_wishlist: false } : p))
+        );
+        toast.success('Removed from wishlist');
+      } else {
+        await productsApi.addToWishlist(product.id);
+        setProducts((prevProducts) =>
+          prevProducts.map((p) => (p.id === product.id ? { ...p, in_wishlist: true } : p))
+        );
+        toast.success('Added to wishlist');
+      }
+    } catch (error) {
+      console.error('Wishlist operation failed:', error);
+      toast.error('Failed to update wishlist');
     }
   }
 
@@ -339,7 +371,23 @@ export default function ProductsContent() {
                 </Link>
                 <p className="text-dark-gray text-sm line-clamp-2">{product.description}</p>
                 <div className="flex justify-between items-center mt-3">
-                  <span className="text-lg font-bold text-foreground">${product.price}</span>
+                  {product.has_discount ? (
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg font-bold text-foreground">
+                        ${Number(product.price).toFixed(2)}
+                      </span>
+                      <span className="text-sm line-through text-muted-foreground">
+                        ${Number(product.original_price).toFixed(2)}
+                      </span>
+                      <Badge variant="destructive" className="text-xs">
+                        {product.discount_percent}% OFF
+                      </Badge>
+                    </div>
+                  ) : (
+                    <span className="text-lg font-bold text-foreground">
+                      ${Number(product.price).toFixed(2)}
+                    </span>
+                  )}
                   <Badge
                     variant={product.stock_quantity > 0 ? 'default' : 'destructive'}
                     className="text-background"
@@ -360,9 +408,9 @@ export default function ProductsContent() {
                   ))}
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex gap-2">
                 <Button
-                  className="bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
+                  className="flex-1 bg-primary text-background hover:bg-primary/90 hover:scale-105 transition-all duration-200"
                   onClick={(e) => {
                     e.preventDefault();
                     handleAddToCart(product.id);
@@ -372,6 +420,23 @@ export default function ProductsContent() {
                   <ShoppingCart className="mr-2 h-4 w-4" />
                   Add to Cart
                 </Button>
+
+                {isAuthenticated && (
+                  <Button
+                    variant="outline"
+                    className="px-3"
+                    title={product.in_wishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleWishlistToggle(product);
+                    }}
+                  >
+                    <Heart
+                      className={`h-4 w-4 ${product.in_wishlist ? 'fill-destructive text-destructive' : ''}`}
+                    />
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}

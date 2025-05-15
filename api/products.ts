@@ -26,6 +26,9 @@ export interface Product {
   name: string;
   description: string;
   price: number;
+  original_price: number;
+  discount_percent: number;
+  has_discount: boolean;
   created_at: string;
   stock_quantity: number;
   average_rating: number;
@@ -38,6 +41,8 @@ export interface Product {
   model: string;
   serial_number: string;
   warranty_months: string;
+  in_wishlist: boolean;
+  price_approved: boolean;
 }
 
 interface ProductQueryParams {
@@ -412,6 +417,54 @@ export const productsApi = {
     }
   },
 
+  // Wishlist functionality
+  addToWishlist: async (productId: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/add_to_wishlist/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to add to wishlist');
+    }
+  },
+
+  removeFromWishlist: async (productId: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/remove_from_wishlist/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to remove from wishlist');
+    }
+  },
+
+  getWishlist: async (): Promise<Product[]> => {
+    const response = await fetch(`${BASE_URL}/api/products/wishlist/`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch wishlist');
+    }
+
+    const data = await response.json();
+    return data.results || data;
+  },
+
   async uploadProductImage(productId: number, formData: FormData): Promise<ProductImage> {
     const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${productId}/add_image/`, {
@@ -465,5 +518,86 @@ export const productsApi = {
     }
 
     return await response.json();
+  },
+
+  // Sales Manager Discount Management
+  setProductPrice: async (productId: number, price: number): Promise<Product> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/set_price/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ price }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to set product price');
+    }
+
+    return response.json();
+  },
+
+  setProductDiscount: async (productId: number, discountPercent: number): Promise<Product> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/set_discount/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ discount_percent: discountPercent }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to set product discount');
+    }
+
+    return response.json();
+  },
+
+  applyBulkDiscount: async (productIds: number[], discountPercent: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/bulk_discount/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({
+        product_ids: productIds,
+        discount_percent: discountPercent,
+      }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to apply bulk discount');
+    }
+  },
+
+  approveProductPrice: async (productId: number): Promise<Product> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/approve_price/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to approve product price');
+    }
+
+    return response.json();
   },
 };
