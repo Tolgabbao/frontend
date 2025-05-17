@@ -19,6 +19,7 @@ export interface UserDetails {
   username: string;
   email: string;
   date_joined?: string;
+  user_type?: string; // Assuming user_type is a string
   is_staff?: boolean; // Add is_staff property
   addresses?: Address[]; // Assuming addresses is an array of strings
 }
