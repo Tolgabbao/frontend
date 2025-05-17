@@ -150,4 +150,57 @@ export const orderApi = {
     // Return the response body as a Blob
     return await response.blob();
   },
+
+  // Product manager functions for delivery management
+  getPendingDeliveries: async (): Promise<PaginatedOrdersResponse> => {
+    const response = await fetch(`${BASE_URL}/api/orders/pending_deliveries/`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch pending deliveries');
+    }
+
+    return await response.json();
+  },
+
+  approveOrder: async (id: number): Promise<Order> => {
+    const csrfToken = getCSRFToken();
+    const response = await fetch(`${BASE_URL}/api/orders/${id}/approve_order/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to approve order');
+    }
+
+    return await response.json();
+  },
+
+  updateDeliveryStatus: async (
+    id: number,
+    statusData: { status: string; delivery_notes: string }
+  ): Promise<Order> => {
+    const csrfToken = getCSRFToken();
+    const response = await fetch(`${BASE_URL}/api/orders/${id}/update_delivery_status/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify(statusData),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update delivery status');
+    }
+
+    return await response.json();
+  },
 };

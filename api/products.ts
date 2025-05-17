@@ -65,6 +65,66 @@ function getCookie(name: string): string {
 }
 
 export const productsApi = {
+  // Category management
+  createCategory: async (categoryData: {
+    name: string;
+    description: string;
+  }): Promise<Category> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/categories/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify(categoryData),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create category');
+    }
+
+    return response.json();
+  },
+
+  updateCategory: async (
+    id: number,
+    categoryData: { name: string; description: string }
+  ): Promise<Category> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/categories/${id}/`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify(categoryData),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to update category');
+    }
+
+    return response.json();
+  },
+
+  deleteCategory: async (id: number): Promise<void> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/categories/${id}/`, {
+      method: 'DELETE',
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to delete category');
+    }
+  },
+
   getProducts: async (params: ProductQueryParams = {}): Promise<Product[]> => {
     const queryParams = new URLSearchParams();
 
@@ -524,6 +584,27 @@ export const productsApi = {
     }
 
     return await response.json();
+  },
+
+  // Product Manager Stock Management
+  updateProductStock: async (productId: number, stockQuantity: number): Promise<Product> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${productId}/update_stock/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ stock_quantity: stockQuantity }),
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to update product stock');
+    }
+
+    return response.json();
   },
 
   // Sales Manager Discount Management

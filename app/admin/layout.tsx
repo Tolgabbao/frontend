@@ -56,11 +56,20 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <NavItem href="/admin/products" icon={<Package className="h-5 w-5" />}>
               Products
             </NavItem>
+            <NavItem href="/admin/categories" icon={<Package className="h-5 w-5" />}>
+              Categories
+            </NavItem>
+            <NavItem href="/admin/stock" icon={<Package className="h-5 w-5" />}>
+              Stock Management
+            </NavItem>
             <NavItem href="/admin/comments" icon={<MessageCircle className="h-5 w-5" />}>
               Comments
             </NavItem>
             <NavItem href="/admin/orders" icon={<ShoppingBag className="h-5 w-5" />}>
               Orders
+            </NavItem>
+            <NavItem href="/admin/deliveries" icon={<ShoppingBag className="h-5 w-5" />}>
+              Deliveries
             </NavItem>
             <NavItem href="/admin/users" icon={<Users className="h-5 w-5" />}>
               Users
