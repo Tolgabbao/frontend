@@ -8,9 +8,12 @@ export interface Category {
 
 export interface ProductComment {
   id: number;
-  user: string;
-  content: string;
+  user_name: string;
+  comment: string;
+  is_approved: boolean;
   created_at: string;
+  product: number;
+  // The original interface only had user, content, and created_at
 }
 
 export interface ProductImage {
@@ -238,18 +241,21 @@ export const productsApi = {
     return response.json();
   },
 
-  approveComment: async (productId: number, commentId: number): Promise<void> => {
-    const csrfToken = getCookie('csrftoken');
-    const response = await fetch(`${BASE_URL}/api/products/${productId}/approve_comment/`, {
+  approveComment: async (commentId: number): Promise<void> => {
+    const response = await fetch(`${BASE_URL}/api/comments/${commentId}/approve/`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        'X-CSRFToken': csrfToken,
+        'X-CSRFToken': getCookie('csrftoken'),
       },
-      body: JSON.stringify({ comment_id: commentId }),
-      credentials: 'include',
     });
-    if (!response.ok) throw new Error('Failed to approve comment');
+
+    if (!response.ok) {
+      throw new Error('Failed to approve comment');
+    }
+
+    return response.json();
   },
 
   // Admin functions
@@ -596,6 +602,18 @@ export const productsApi = {
     if (!response.ok) {
       const errorData = await response.json();
       throw new Error(errorData.error || 'Failed to approve product price');
+    }
+
+    return response.json();
+  },
+
+  getPendingComments: async (): Promise<ProductComment[]> => {
+    const response = await fetch(`${BASE_URL}/api/comments/pending/`, {
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch pending comments');
     }
 
     return response.json();
