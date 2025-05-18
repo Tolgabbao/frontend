@@ -364,11 +364,11 @@ export default function DiscountsPage() {
                       </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell>{product.category.name}</TableCell>
-                      <TableCell>${product.original_price.toFixed(2)}</TableCell>
+                      <TableCell>${Number(product.original_price).toFixed(2)}</TableCell>
                       <TableCell>
                         {product.has_discount ? (
                           <Badge variant="destructive">
-                            {product.discount_percent.toFixed(0)}% OFF
+                            {Number(product.discount_percent).toFixed(0)}% OFF
                           </Badge>
                         ) : (
                           <span className="text-muted-foreground">No discount</span>
