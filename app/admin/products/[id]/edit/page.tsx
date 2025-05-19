@@ -58,4 +58,65 @@ export default function EditProductPage() {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+    useEffect(() => {
+    // Check if user is staff
+    if (isAuthenticated && !user?.is_staff) {
+      toast.error('You do not have permission to access this page');
+      router.push('/');
+    } else if (!isAuthenticated) {
+      router.push('/login?callbackUrl=/admin/products/${id}/edit');
+    }
+  }, [isAuthenticated, user, router, id]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await productsApi.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        toast.error('Failed to load categories');
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const fetchProduct = async () => {
+      try {
+        const productId = Array.isArray(id) ? parseInt(id[0]) : id ? +id : 0;
+        const product = await productsApi.getProduct(productId);
+        setFormData({
+          id: product.id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          cost_price: product.cost_price,
+          stock_quantity: product.stock_quantity,
+          category_id: product.category?.id.toString() || '',
+          model: product.model,
+          serial_number: product.serial_number,
+          warranty_months: product.warranty_months,
+          distributor_info: product.distributor_info,
+          is_visible: product.is_visible,
+          image_upload: null,
+        });
+        if (product.main_image_url) {
+          setImagePreview(
+            product.main_image_url.startsWith('http')
+              ? product.main_image_url
+              : `${apiBaseUrl}${product.main_image_url}`
+          );
+        }
+      } catch (error) {
+        console.error('Error fetching product:', error);
+        toast.error('Failed to load product');
+      }
+    };
+
+    if (id) {
+      fetchProduct();
+    }
+  }, [id, apiBaseUrl]);
 }
