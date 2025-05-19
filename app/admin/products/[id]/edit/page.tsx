@@ -119,4 +119,53 @@ export default function EditProductPage() {
       fetchProduct();
     }
   }, [id, apiBaseUrl]);
+
+    const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+    // Convert numeric string inputs to numbers
+    if (type === 'number') {
+      setFormData({
+        ...formData,
+        [name]: parseFloat(value),
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
+  };
+
+  const handleSelectChange = (value: string, fieldName: string) => {
+    setFormData({
+      ...formData,
+      [fieldName]: value,
+    });
+  };
+
+  const handleCheckboxChange = (field: string, checked: boolean) => {
+    setFormData({
+      ...formData,
+      [field]: checked,
+    });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      setFormData({
+        ...formData,
+        image_upload: file,
+      });
+
+      // Create image preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 }
