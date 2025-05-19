@@ -397,6 +397,24 @@ export const productsApi = {
     return response.json();
   },
 
+  editProduct: async (id: number, formData: FormData): Promise<Product> => {
+    const csrfToken = getCookie('csrftoken');
+    const response = await fetch(`${BASE_URL}/api/products/${id}/`, {
+      method: 'PATCH',
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to edit product');
+    }
+
+    return response.json();
+  },
+
   deleteProduct: async (id: number): Promise<void> => {
     const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${id}/`, {

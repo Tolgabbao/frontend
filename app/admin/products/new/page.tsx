@@ -419,6 +419,12 @@ export default function NewProductPage() {
                   </>
                 )}
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/admin/products/edit/${formData.id}`)}
+              >
+                Edit Product
+              </Button>
             </div>
           </form>
         </CardContent>
