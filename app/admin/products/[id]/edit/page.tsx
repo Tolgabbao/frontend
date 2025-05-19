@@ -168,4 +168,34 @@ export default function EditProductPage() {
       reader.readAsDataURL(file);
     }
   };
+
+    const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      // Create FormData object for multipart form submission
+      const submitData = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== 'image_upload' && key !== 'id') {
+          submitData.append(key, value.toString());
+        }
+      });
+
+      if (formData.image_upload) {
+        submitData.append('image_upload', formData.image_upload);
+      }
+
+      if (formData.id) {
+        await productsApi.editProduct(formData.id, submitData);
+        toast.success('Product updated successfully');
+        router.push('/admin/products');
+      }
+    } catch (error) {
+      console.error('Error updating product:', error);
+      toast.error('Failed to update product');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 }
