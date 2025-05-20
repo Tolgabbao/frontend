@@ -30,6 +30,7 @@ export interface Product {
   description: string;
   price: number;
   original_price: number;
+  cost_price: number;
   discount_percent: number;
   has_discount: boolean;
   created_at: string;
@@ -46,6 +47,7 @@ export interface Product {
   warranty_months: string;
   in_wishlist: boolean;
   price_approved: boolean;
+  distributor_info: string;
 }
 
 interface ProductQueryParams {
