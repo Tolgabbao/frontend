@@ -537,7 +537,6 @@ export const productsApi = {
       throw new Error(errorData.error || 'Failed to remove from wishlist');
     }
   },
-
   getWishlist: async (): Promise<Product[]> => {
     const response = await fetch(`${BASE_URL}/api/products/my_wishlist/`, {
       credentials: 'include',
@@ -551,7 +550,12 @@ export const productsApi = {
 
     // Handle nested product data if using WishlistSerializer
     if (Array.isArray(data) && data[0]?.product) {
-      return data.map(item => item.product);
+      return data.map((item) => item.product);
+    }
+
+    // Handle the structure where product details are nested in product_details
+    if (Array.isArray(data) && data[0]?.product_details) {
+      return data.map((item) => item.product_details);
     }
 
     return data.results || data;
