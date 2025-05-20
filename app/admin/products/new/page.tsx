@@ -1,23 +1,23 @@
-"use client";
+'use client';
 
-import { useState, useEffect, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { Category, productsApi } from "@/api/products";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { useState, useEffect, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/contexts/AuthContext';
+import { Category, productsApi } from '@/api/products';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
-import { ArrowLeft, Save, Upload } from "lucide-react";
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { ArrowLeft, Save, Upload } from 'lucide-react';
 
 interface ProductFormData {
   name: string;
@@ -36,16 +36,16 @@ interface ProductFormData {
 
 export default function NewProductPage() {
   const [formData, setFormData] = useState<ProductFormData>({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     price: 0,
     cost_price: 0,
     stock_quantity: 0,
-    category_id: "",
-    model: "",
-    serial_number: "",
+    category_id: '',
+    model: '',
+    serial_number: '',
     warranty_months: 12,
-    distributor_info: "",
+    distributor_info: '',
     is_visible: false,
   });
   const [categories, setCategories] = useState<Category[]>([]);
@@ -57,10 +57,10 @@ export default function NewProductPage() {
   useEffect(() => {
     // Check if user is staff
     if (isAuthenticated && !user?.is_staff) {
-      toast.error("You do not have permission to access this page");
-      router.push("/");
+      toast.error('You do not have permission to access this page');
+      router.push('/');
     } else if (!isAuthenticated) {
-      router.push("/login?callbackUrl=/admin/products/new");
+      router.push('/login?callbackUrl=/admin/products/new');
     }
   }, [isAuthenticated, user, router]);
 
@@ -70,20 +70,18 @@ export default function NewProductPage() {
         const data = await productsApi.getCategories();
         setCategories(data);
       } catch (error) {
-        console.error("Error fetching categories:", error);
-        toast.error("Failed to load categories");
+        console.error('Error fetching categories:', error);
+        toast.error('Failed to load categories');
       }
     };
 
     fetchCategories();
   }, []);
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     // Convert numeric string inputs to numbers
-    if (type === "number") {
+    if (type === 'number') {
       setFormData({
         ...formData,
         [name]: parseFloat(value),
@@ -135,21 +133,21 @@ export default function NewProductPage() {
       // Create FormData object for multipart form submission
       const submitData = new FormData();
       Object.entries(formData).forEach(([key, value]) => {
-        if (key !== "image_upload") {
+        if (key !== 'image_upload') {
           submitData.append(key, value.toString());
         }
       });
 
       if (formData.image_upload) {
-        submitData.append("image_upload", formData.image_upload);
+        submitData.append('image_upload', formData.image_upload);
       }
 
       await productsApi.createProduct(submitData);
-      toast.success("Product created successfully");
-      router.push("/admin/products");
+      toast.success('Product created successfully');
+      router.push('/admin/products');
     } catch (error) {
-      console.error("Error creating product:", error);
-      toast.error("Failed to create product");
+      console.error('Error creating product:', error);
+      toast.error('Failed to create product');
     } finally {
       setIsSubmitting(false);
     }
@@ -159,10 +157,7 @@ export default function NewProductPage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Create New Product</h1>
-        <Button
-          variant="outline"
-          onClick={() => router.push("/admin/products")}
-        >
+        <Button variant="outline" onClick={() => router.push('/admin/products')}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Products
         </Button>
@@ -178,9 +173,7 @@ export default function NewProductPage() {
               {/* Basic Information */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Product Name *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Product Name *</label>
                   <Input
                     name="name"
                     value={formData.name}
@@ -191,9 +184,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Model *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Model *</label>
                   <Input
                     name="model"
                     value={formData.model}
@@ -204,9 +195,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Serial Number *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Serial Number *</label>
                   <Input
                     name="serial_number"
                     value={formData.serial_number}
@@ -217,9 +206,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Description *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Description *</label>
                   <Textarea
                     name="description"
                     value={formData.description}
@@ -231,24 +218,17 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Category *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Category *</label>
                   <Select
                     value={formData.category_id}
-                    onValueChange={(value) =>
-                      handleSelectChange(value, "category_id")
-                    }
+                    onValueChange={(value) => handleSelectChange(value, 'category_id')}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
+                        <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -260,9 +240,7 @@ export default function NewProductPage() {
               {/* Pricing and Stock */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Sale Price ($) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Sale Price ($) *</label>
                   <Input
                     type="number"
                     name="price"
@@ -275,9 +253,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Cost Price ($) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Cost Price ($) *</label>
                   <Input
                     type="number"
                     name="cost_price"
@@ -290,9 +266,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Stock Quantity *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Stock Quantity *</label>
                   <Input
                     type="number"
                     name="stock_quantity"
@@ -304,9 +278,7 @@ export default function NewProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Warranty (months) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Warranty (months) *</label>
                   <Input
                     type="number"
                     name="warranty_months"
@@ -336,7 +308,7 @@ export default function NewProductPage() {
                     id="is_visible"
                     checked={formData.is_visible}
                     onCheckedChange={(checked) =>
-                      handleCheckboxChange("is_visible", checked === true)
+                      handleCheckboxChange('is_visible', checked === true)
                     }
                   />
                   <label
@@ -351,9 +323,7 @@ export default function NewProductPage() {
 
             {/* Product Image */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Product Image
-              </label>
+              <label className="block text-sm font-medium mb-2">Product Image</label>
               <div className="flex items-center gap-4">
                 <div className="border rounded-md p-2 flex-grow">
                   <label className="cursor-pointer flex flex-col items-center justify-center h-40 bg-background border-2 border-dashed border-gray-300 rounded-md">
@@ -369,9 +339,7 @@ export default function NewProductPage() {
                     ) : (
                       <div className="flex flex-col items-center justify-center py-6">
                         <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500">
-                          Click to upload main image
-                        </p>
+                        <p className="text-sm text-gray-500">Click to upload main image</p>
                       </div>
                     )}
                     <input
@@ -402,11 +370,7 @@ export default function NewProductPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? (
                   <div className="flex items-center">
                     <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
@@ -418,12 +382,6 @@ export default function NewProductPage() {
                     Save Product
                   </>
                 )}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => router.push(`/admin/products/edit/${formData.id}`)}
-              >
-                Edit Product
               </Button>
             </div>
           </form>

@@ -3,7 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import { Category, Product, productsApi } from '@/api/products';
+import { Category, productsApi } from '@/api/products';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,7 +58,7 @@ export default function EditProductPage() {
   const router = useRouter();
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
-    useEffect(() => {
+  useEffect(() => {
     // Check if user is staff
     if (isAuthenticated && !user?.is_staff) {
       toast.error('You do not have permission to access this page');
@@ -97,7 +97,7 @@ export default function EditProductPage() {
           category_id: product.category?.id.toString() || '',
           model: product.model,
           serial_number: product.serial_number,
-          warranty_months: product.warranty_months,
+          warranty_months: Number(product.warranty_months),
           distributor_info: product.distributor_info,
           is_visible: product.is_visible,
           image_upload: null,
@@ -120,9 +120,7 @@ export default function EditProductPage() {
     }
   }, [id, apiBaseUrl]);
 
-    const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     // Convert numeric string inputs to numbers
     if (type === 'number') {
@@ -169,7 +167,7 @@ export default function EditProductPage() {
     }
   };
 
-    const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
@@ -199,7 +197,7 @@ export default function EditProductPage() {
     }
   };
 
-    return (
+  return (
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Edit Product</h1>
@@ -219,9 +217,7 @@ export default function EditProductPage() {
               {/* Basic Information */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Product Name *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Product Name *</label>
                   <Input
                     name="name"
                     value={formData.name}
@@ -243,9 +239,7 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Serial Number *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Serial Number *</label>
                   <Input
                     name="serial_number"
                     value={formData.serial_number}
@@ -256,9 +250,7 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Description *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Description *</label>
                   <Textarea
                     name="description"
                     value={formData.description}
@@ -270,24 +262,17 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Category *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Category *</label>
                   <Select
                     value={formData.category_id}
-                    onValueChange={(value) =>
-                      handleSelectChange(value, 'category_id')
-                    }
+                    onValueChange={(value) => handleSelectChange(value, 'category_id')}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select a category" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id.toString()}
-                        >
+                        <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
                         </SelectItem>
                       ))}
@@ -299,9 +284,7 @@ export default function EditProductPage() {
               {/* Pricing and Stock */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Sale Price ($) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Sale Price ($) *</label>
                   <Input
                     type="number"
                     name="price"
@@ -314,9 +297,7 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Cost Price ($) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Cost Price ($) *</label>
                   <Input
                     type="number"
                     name="cost_price"
@@ -329,9 +310,7 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Stock Quantity *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Stock Quantity *</label>
                   <Input
                     type="number"
                     name="stock_quantity"
@@ -343,9 +322,7 @@ export default function EditProductPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Warranty (months) *
-                  </label>
+                  <label className="block text-sm font-medium mb-1">Warranty (months) *</label>
                   <Input
                     type="number"
                     name="warranty_months"
@@ -390,9 +367,7 @@ export default function EditProductPage() {
 
             {/* Product Image */}
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Product Image
-              </label>
+              <label className="block text-sm font-medium mb-2">Product Image</label>
               <div className="flex items-center gap-4">
                 <div className="border rounded-md p-2 flex-grow">
                   <label className="cursor-pointer flex flex-col items-center justify-center h-40 bg-background border-2 border-dashed border-gray-300 rounded-md">
@@ -408,9 +383,7 @@ export default function EditProductPage() {
                     ) : (
                       <div className="flex flex-col items-center justify-center py-6">
                         <Upload className="h-10 w-10 text-gray-400 mb-2" />
-                        <p className="text-sm text-gray-500">
-                          Click to upload main image
-                        </p>
+                        <p className="text-sm text-gray-500">Click to upload main image</p>
                       </div>
                     )}
                     <input
@@ -441,11 +414,7 @@ export default function EditProductPage() {
             </div>
 
             <div className="flex justify-end">
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="min-w-[150px]"
-              >
+              <Button type="submit" disabled={isSubmitting} className="min-w-[150px]">
                 {isSubmitting ? (
                   <div className="flex items-center">
                     <div className="animate-spin mr-2 h-4 w-4 border-2 border-t-transparent border-white rounded-full"></div>
