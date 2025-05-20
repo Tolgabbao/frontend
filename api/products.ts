@@ -501,7 +501,7 @@ export const productsApi = {
     }
   },
 
-  // Wishlist functionality
+  // Updated wishlist functions
   addToWishlist: async (productId: number): Promise<void> => {
     const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${productId}/add_to_wishlist/`, {
@@ -522,7 +522,7 @@ export const productsApi = {
   removeFromWishlist: async (productId: number): Promise<void> => {
     const csrfToken = getCookie('csrftoken');
     const response = await fetch(`${BASE_URL}/api/products/${productId}/remove_from_wishlist/`, {
-      method: 'POST',
+      method: 'DELETE', // Changed from POST to DELETE
       headers: {
         'Content-Type': 'application/json',
         'X-CSRFToken': csrfToken,
@@ -537,7 +537,7 @@ export const productsApi = {
   },
 
   getWishlist: async (): Promise<Product[]> => {
-    const response = await fetch(`${BASE_URL}/api/products/wishlist/`, {
+    const response = await fetch(`${BASE_URL}/api/products/my_wishlist/`, {
       credentials: 'include',
     });
 
@@ -546,6 +546,12 @@ export const productsApi = {
     }
 
     const data = await response.json();
+
+    // Handle nested product data if using WishlistSerializer
+    if (Array.isArray(data) && data[0]?.product) {
+      return data.map(item => item.product);
+    }
+
     return data.results || data;
   },
 
