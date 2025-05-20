@@ -6,11 +6,23 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { orderApi, Order } from '@/api/order';
+import { refundApi, CreateRefundRequest } from '@/api/refund';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingBag, ArrowLeft, Download } from 'lucide-react'; // Import Download icon
+import { ShoppingBag, ArrowLeft, Download, RefreshCw } from 'lucide-react'; // Add RefreshCw icon
 import { toast } from 'sonner';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { isWithinLast30Days } from '@/lib/utils';
 
 export default function OrderDetailPage() {
   const router = useRouter();
@@ -20,8 +32,14 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
-  const [downloading, setDownloading] = useState(false); // State for download button
+  const [downloading, setDownloading] = useState(false);
   const [pageReady, setPageReady] = useState(false);
+
+  // Refund state
+  const [refundDialogOpen, setRefundDialogOpen] = useState(false);
+  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const [submittingRefund, setSubmittingRefund] = useState(false);
 
   // Get the API base URL for constructing full image URLs
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
@@ -106,6 +124,43 @@ export default function OrderDetailPage() {
     } finally {
       setDownloading(false);
     }
+  };
+
+  // Handle refund request
+  const handleRefundRequest = async () => {
+    if (!selectedItemId || !refundReason.trim()) {
+      toast.error('Please provide a reason for your refund request');
+      return;
+    }
+
+    setSubmittingRefund(true);
+    try {
+      const refundData: CreateRefundRequest = {
+        order_item: selectedItemId,
+        reason: refundReason,
+      };
+
+      await refundApi.createRefundRequest(refundData);
+      toast.success('Refund request submitted successfully');
+      setRefundDialogOpen(false);
+      setRefundReason('');
+      setSelectedItemId(null);
+    } catch (err) {
+      console.error('Error requesting refund:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit refund request';
+      toast.error(errorMessage);
+    } finally {
+      setSubmittingRefund(false);
+    }
+  };
+
+  // Check if item is eligible for refund
+  const isEligibleForRefund = () => {
+    if (!order || order.status !== 'DELIVERED' || !order.delivered_at) {
+      return false;
+    }
+    // Check if delivered within last 30 days
+    return isWithinLast30Days(new Date(order.delivered_at));
   };
 
   // Show loading state until page is ready
@@ -213,11 +268,25 @@ export default function OrderDetailPage() {
                     <p className="font-medium text-foreground">{item.product_name}</p>
                     <p className="text-muted-foreground">Quantity: {item.quantity}</p>
                   </div>
-                  <div className="text-right">
+                  <div className="text-right flex flex-col items-end">
                     <p className="font-bold">${item.price_at_time}</p>
                     <p className="text-muted-foreground text-sm">
                       Subtotal: ${(item.price_at_time * item.quantity).toFixed(2)}
                     </p>
+                    {isEligibleForRefund() && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={() => {
+                          setSelectedItemId(item.id);
+                          setRefundDialogOpen(true);
+                        }}
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Request Refund
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -307,6 +376,54 @@ export default function OrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Refund Request Dialog */}
+      <Dialog open={refundDialogOpen} onOpenChange={setRefundDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Request a Refund</DialogTitle>
+            <DialogDescription>
+              Please provide the reason for your refund request. We will review your request and get
+              back to you.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="refund-reason">Reason for refund</Label>
+              <Textarea
+                id="refund-reason"
+                placeholder="Please explain why you want to return this item..."
+                value={refundReason}
+                onChange={(e) => setRefundReason(e.target.value)}
+                rows={5}
+                className="mt-2"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setRefundDialogOpen(false)}
+              disabled={submittingRefund}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRefundRequest}
+              disabled={!refundReason.trim() || submittingRefund}
+            >
+              {submittingRefund ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-t-transparent"></div>
+                  Submitting...
+                </>
+              ) : (
+                'Submit Request'
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

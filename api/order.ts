@@ -36,6 +36,7 @@ export interface Order {
   total_amount: number;
   created_at: string;
   updated_at: string;
+  delivered_at: string | null;
   shipping_address: string;
   items: {
     id: number;
