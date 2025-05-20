@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ShoppingCart, User, LogOut, Package, Home, Settings } from 'lucide-react';
+import { ShoppingCart, User, LogOut, Package, Home, Settings, Heart } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
@@ -63,6 +63,14 @@ export default function Navigation() {
 
             {isAuthenticated ? (
               <>
+                {/* Wishlist button for authenticated users */}
+                <Button variant="ghost" asChild>
+                  <Link href="/wishlist">
+                    <Heart className="w-4 h-4 mr-2" />
+                    Wishlist
+                  </Link>
+                </Button>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -88,6 +96,12 @@ export default function Navigation() {
                       <Link href="/orders" className="flex items-center">
                         <Package className="w-4 h-4 mr-2" />
                         Orders
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/wishlist" className="flex items-center">
+                        <Heart className="w-4 h-4 mr-2" />
+                        Wishlist
                       </Link>
                     </DropdownMenuItem>
 
