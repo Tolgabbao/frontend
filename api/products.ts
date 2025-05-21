@@ -729,4 +729,20 @@ export const productsApi = {
 
     return response.json();
   },
+
+  // Get products pending price approval (for sales managers)
+  getPendingPriceApproval: async (): Promise<Product[]> => {
+    const response = await fetch(`${BASE_URL}/api/products/pending_price_approval/`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch products pending price approval');
+    }
+
+    return await response.json();
+  },
 };
