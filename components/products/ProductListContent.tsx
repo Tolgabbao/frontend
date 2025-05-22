@@ -169,7 +169,7 @@ export default function ProductListContent() {
           <h2 className="text-2xl font-bold text-foreground mb-6">Featured Products</h2>
           <Button variant="ghost" asChild className="group">
             {/* Link remains pointing to top rated as per original design */}
-            <Link href="/products?ordering=-average_rating" className="flex items-center">
+            <Link href="/products" className="flex items-center">
               View all
               <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>

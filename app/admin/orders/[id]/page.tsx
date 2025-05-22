@@ -191,8 +191,8 @@ export default function AdminOrderDetailPage() {
             <CardContent className="pt-6">
               <div className="space-y-2">
                 <div className="flex justify-between text-muted-foreground">
-                  <span>Customer ID</span>
-                  <span>{order.user}</span>
+                  <span>Customer</span>
+                  <span>{order.username}</span>
                 </div>
                 <div className="flex justify-between text-muted-foreground">
                   <span>Order Date</span>

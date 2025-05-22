@@ -204,7 +204,7 @@ export default function DeliveryManagementPage() {
                         {order.status}
                       </Badge>
                     </TableCell>
-                    <TableCell>User #{order.user}</TableCell>
+                    <TableCell>{order.username}</TableCell>
                     <TableCell className="max-w-xs truncate">{order.shipping_address}</TableCell>
                     <TableCell>${Number(order.total_amount).toFixed(2)}</TableCell>
                     <TableCell>

@@ -31,8 +31,9 @@ export interface OrderRequest {
 
 export interface Order {
   id: number;
-  user: number;
+  username: string;
   status: string;
+  cost_price: number;
   total_amount: number;
   created_at: string;
   updated_at: string;

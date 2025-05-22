@@ -176,7 +176,7 @@ export default function OrdersAdminPage() {
                       <TableRow key={order.id}>
                         <TableCell className="font-medium">{order.id}</TableCell>
                         <TableCell>{new Date(order.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell>User #{order.user}</TableCell>
+                        <TableCell>{order.username}</TableCell>
                         <TableCell>
                           <Badge variant={getStatusBadgeVariant(order.status)}>
                             {order.status}
